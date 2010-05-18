@@ -117,6 +117,20 @@ int module_unload( const char *file_name )
 	return -1;	/* not found */
 }
 
+static lt_dlhandle slapd_lt_dlopenext_global( const char *filename )
+{
+	lt_dlhandle handle = 0;
+	lt_dladvise advise;
+
+	if (!lt_dladvise_init (&advise) && !lt_dladvise_ext (&advise)
+			&& !lt_dladvise_global (&advise))
+		handle = lt_dlopenadvise (filename, advise);
+
+	lt_dladvise_destroy (&advise);
+
+	return handle;
+}
+
 int module_load(const char* file_name, int argc, char *argv[])
 {
 	module_loaded_t *module;
@@ -180,7 +194,7 @@ int module_load(const char* file_name, int argc, char *argv[])
 	 * to calling Debug. This is because Debug is a macro that expands
 	 * into multiple function calls.
 	 */
-	if ((module->lib = lt_dlopenext(file)) == NULL) {
+	if ((module->lib = slapd_lt_dlopenext_global(file)) == NULL) {
 		error = lt_dlerror();
 #ifdef HAVE_EBCDIC
 		strcpy( ebuf, error );
