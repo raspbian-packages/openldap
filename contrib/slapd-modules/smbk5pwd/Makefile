@@ -25,6 +25,7 @@ HEIMDAL_INC = -I/usr/heimdal/include
 HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
 
 LIBTOOL = $(LDAP_BUILD)/debian/build/libtool
+INSTALL = /usr/bin/install
 CC = gcc
 OPT = -g -O2 -Wall
 # Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
@@ -33,6 +34,7 @@ INCS = $(LDAP_INC) $(SSL_INC)
 LIBS = $(LDAP_LIB) $(SSL_LIB)
 
 PROGRAMS = smbk5pwd.la
+MANPAGES = slapo-smbk5pwd.5
 LTVER = 0:0:0
 
 prefix=/usr
@@ -42,6 +44,8 @@ ldap_subdir=/ldap
 libdir=$(exec_prefix)/lib
 libexecdir=$(exec_prefix)/libexec
 moduledir = $(libdir)$(ldap_subdir)
+mandir = $(exec_prefix)/share/man
+man5dir = $(mandir)/man5
 
 .SUFFIXES: .c .o .lo
 
@@ -57,9 +61,17 @@ smbk5pwd.la:	smbk5pwd.lo
 clean:
 	$(LIBTOOL) --mode=clean rm -f
 
-install: $(PROGRAMS)
+install: install-lib install-man FORCE
+
+install-lib: $(PROGRAMS)
 	mkdir -p $(DESTDIR)$(moduledir)
 	for p in $(PROGRAMS) ; do \
 		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
 	done
+
+install-man: $(MANPAGES)
+	mkdir -p  $(DESTDIR)$(man5dir)
+	$(INSTALL) -m 644 $(MANPAGES) $(DESTDIR)$(man5dir)
+
+FORCE:
 
