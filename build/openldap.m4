@@ -1142,3 +1142,54 @@ AC_DEFUN([OL_SSL_COMPAT],
 #endif
 	], [ol_cv_ssl_crl_compat=yes], [ol_cv_ssl_crl_compat=no])])
 ])
+
+dnl ====================================================================
+dnl check for symbol versioning support
+AC_DEFUN([OL_SYMBOL_VERSIONING],
+[AC_CACHE_CHECK([for .symver assembler directive],
+	[ol_cv_asm_symver_directive],[
+cat > conftest.s <<EOF
+${libc_cv_dot_text}
+_sym:
+.symver _sym,sym@VERS
+EOF
+if ${CC-cc} -c $ASFLAGS conftest.s 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+  ol_cv_asm_symver_directive=yes
+else
+  ol_cv_asm_symver_directive=no
+fi
+rm -f conftest*])
+AC_CACHE_CHECK([for ld --version-script],
+	[ol_cv_ld_version_script_option],[
+if test $ol_cv_asm_symver_directive = yes; then
+  cat > conftest.s <<EOF
+${libc_cv_dot_text}
+_sym:
+.symver _sym,sym@VERS
+EOF
+  cat > conftest.map <<EOF
+VERS_1 {
+	global: sym;
+};
+
+VERS_2 {
+	global: sym;
+} VERS_1;
+EOF
+  if ${CC-cc} -c $ASFLAGS conftest.s 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD; then
+    if AC_TRY_COMMAND([${CC-cc} $CFLAGS $LDFLAGS -shared
+                                                 -o conftest.so conftest.o
+                                                 -Wl,--version-script,conftest.map
+                       1>&AS_MESSAGE_LOG_FD]);
+    then
+      ol_cv_ld_version_script_option=yes
+    else
+      ol_cv_ld_version_script_option=no
+    fi
+  else
+    ol_cv_ld_version_script_option=no
+  fi
+else
+  ol_cv_ld_version_script_option=no
+fi
+rm -f conftest*])])
