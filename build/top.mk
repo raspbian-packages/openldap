@@ -104,6 +104,9 @@ LTFLAGS_MOD = $(@PLAT@_LTFLAGS_MOD)
 # LINK_LIBS referenced in library and module link commands.
 LINK_LIBS = $(MOD_LIBS) $(@PLAT@_LINK_LIBS)
 
+# option to pass to $(CC) to support library symbol versioning, if any
+VERSION_OPTION = @VERSION_OPTION@
+
 LTSTATIC = @LTSTATIC@
 
 LTLINK   = $(LIBTOOL) --mode=link \
@@ -113,7 +116,7 @@ LTCOMPILE_LIB = $(LIBTOOL) $(LTONLY_LIB) --mode=compile \
 	$(CC) $(LT_CFLAGS) $(LT_CPPFLAGS) $(LIB_DEFS) -c
 
 LTLINK_LIB = $(LIBTOOL) $(LTONLY_LIB) --mode=link \
-	$(CC) $(LT_CFLAGS) $(LDFLAGS) $(LTFLAGS_LIB)
+	$(CC) $(LT_CFLAGS) $(LDFLAGS) $(LTFLAGS_LIB) $(VERSION_FLAGS)
 
 LTCOMPILE_MOD = $(LIBTOOL) $(LTONLY_MOD) --mode=compile \
 	$(CC) $(LT_CFLAGS) $(LT_CPPFLAGS) $(MOD_DEFS) -c
