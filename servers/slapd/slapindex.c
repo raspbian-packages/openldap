@@ -34,6 +34,8 @@
 int
 slapindex( int argc, char **argv )
 {
+    if (geteuid() == 0)
+        fprintf( stderr, "\nWARNING!\nRunnig as root!\nThere's a fair chance slapd will fail to start.\nCheck file permissions!\n\n");
 	ID id;
 	int rc = EXIT_SUCCESS;
 	const char *progname = "slapindex";
