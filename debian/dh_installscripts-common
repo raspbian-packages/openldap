@@ -1,0 +1,25 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Debian::Debhelper::Dh_Lib;
+
+init();
+
+my $scriptscommon = $ARGV[0];
+
+foreach my $package (@{$dh{DOPACKAGES}}) {
+	my $tmp=tmpdir($package);
+
+	if (! -d "$tmp/DEBIAN") {
+		next;
+	}
+
+	foreach my $file (qw{postinst preinst prerm postrm config}) {
+		my $f="$tmp/DEBIAN/$file";
+		if (! -e $f) {
+			next;
+		}
+		print "changing $f with $scriptscommon\n";
+		complex_doit("perl -pe 's~#SCRIPTSCOMMON#~qx{cat $scriptscommon}~eg' -i $f");
+	}
+}
