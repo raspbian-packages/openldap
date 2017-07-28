@@ -38,6 +38,9 @@ XLIBS = $(LIBRARY) $(LDAP_LIBLUTIL_A)
 XXLIBS = 
 NT_LINK_LIBS = $(AC_LIBS)
 UNIX_LINK_LIBS = $(AC_LIBS)
+ifneq (,$(VERSION_OPTION))
+  VERSION_FLAGS = "$(VERSION_OPTION)$(srcdir)/liblber.map"
+endif
 
 dtest:    $(XLIBS) dtest.o
 	$(LTLINK) -o $@ dtest.o $(LIBS)
