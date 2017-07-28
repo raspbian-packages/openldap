@@ -1,0 +1,27 @@
+From 7b5181da8cdd47a13041f9ee36fa9590a0fa6e48 Mon Sep 17 00:00:00 2001
+From: Ryan Tandy <ryan@nardis.ca>
+Date: Sat, 6 May 2017 22:50:13 +0000
+Subject: [PATCH] ITS#8650 retry gnutls_handshake after GNUTLS_E_AGAIN
+
+---
+ libraries/libldap/tls_g.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/libraries/libldap/tls_g.c b/libraries/libldap/tls_g.c
+index 02f71b05f..0df32a8e4 100644
+--- a/libraries/libldap/tls_g.c
++++ b/libraries/libldap/tls_g.c
+@@ -388,7 +388,9 @@ tlsg_session_accept( tls_session *session )
+ 	tlsg_session *s = (tlsg_session *)session;
+ 	int rc;
+ 
+-	rc = gnutls_handshake( s->session );
++	for ( rc = gnutls_handshake ( s->session );
++	      rc == GNUTLS_E_INTERRUPTED || rc == GNUTLS_E_AGAIN;
++	      rc = gnutls_handshake ( s->session ) );
+ 	if ( rc == 0 && s->ctx->reqcert != LDAP_OPT_X_TLS_NEVER ) {
+ 		const gnutls_datum_t *peer_cert_list;
+ 		unsigned int list_size;
+-- 
+2.11.0
+
