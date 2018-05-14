@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2016 The OpenLDAP Foundation.
+ * Copyright 2008-2018 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,15 @@
 #include <ssl.h>
 #endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+#define ASN1_STRING_data(x)	ASN1_STRING_get0_data(x)
+#endif
+
 typedef SSL_CTX tlso_ctx;
 typedef SSL tlso_session;
+
+static BIO_METHOD * tlso_bio_method = NULL;
+static BIO_METHOD * tlso_bio_setup( void );
 
 static int  tlso_opt_trace = 1;
 
@@ -57,26 +64,18 @@ static void tlso_report_error( void );
 static void tlso_info_cb( const SSL *ssl, int where, int ret );
 static int tlso_verify_cb( int ok, X509_STORE_CTX *ctx );
 static int tlso_verify_ok( int ok, X509_STORE_CTX *ctx );
-static RSA * tlso_tmp_rsa_cb( SSL *ssl, int is_export, int key_length );
-
-static DH * tlso_tmp_dh_cb( SSL *ssl, int is_export, int key_length );
-
-typedef struct dhplist {
-	struct dhplist *next;
-	int keylength;
-	DH *param;
-} dhplist;
-
-static dhplist *tlso_dhparams;
-
 static int tlso_seed_PRNG( const char *randfile );
+#if OPENSSL_VERSION_NUMBER < 0x10100000
+/*
+ * OpenSSL 1.1 API and later has new locking code
+*/
+static RSA * tlso_tmp_rsa_cb( SSL *ssl, int is_export, int key_length );
 
 #ifdef LDAP_R_COMPILE
 /*
  * provide mutexes for the OpenSSL library.
  */
 static ldap_pvt_thread_mutex_t	tlso_mutexes[CRYPTO_NUM_LOCKS];
-static ldap_pvt_thread_mutex_t	tlso_dh_mutex;
 
 static void tlso_locking_cb( int mode, int type, const char *file, int line )
 {
@@ -107,11 +106,52 @@ static void tlso_thr_init( void )
 	for( i=0; i< CRYPTO_NUM_LOCKS ; i++ ) {
 		ldap_pvt_thread_mutex_init( &tlso_mutexes[i] );
 	}
-	ldap_pvt_thread_mutex_init( &tlso_dh_mutex );
 	CRYPTO_set_locking_callback( tlso_locking_cb );
 	CRYPTO_set_id_callback( tlso_thread_self );
 }
 #endif /* LDAP_R_COMPILE */
+#else
+#ifdef LDAP_R_COMPILE
+static void tlso_thr_init( void ) {}
+#endif
+#endif /* OpenSSL 1.1 */
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000
+/*
+ * OpenSSL 1.1 API and later makes the BIO method concrete types internal.
+ */
+
+static BIO_METHOD *
+BIO_meth_new( int type, const char *name )
+{
+	BIO_METHOD *method = LDAP_MALLOC( sizeof(BIO_METHOD) );
+	memset( method, 0, sizeof(BIO_METHOD) );
+
+	method->type = type;
+	method->name = name;
+
+	return method;
+}
+
+static void
+BIO_meth_free( BIO_METHOD *meth )
+{
+	if ( meth == NULL ) {
+		return;
+	}
+
+	LDAP_FREE( meth );
+}
+
+#define BIO_meth_set_write(m, f) (m)->bwrite = (f)
+#define BIO_meth_set_read(m, f) (m)->bread = (f)
+#define BIO_meth_set_puts(m, f) (m)->bputs = (f)
+#define BIO_meth_set_gets(m, f) (m)->bgets = (f)
+#define BIO_meth_set_ctrl(m, f) (m)->ctrl = (f)
+#define BIO_meth_set_create(m, f) (m)->create = (f)
+#define BIO_meth_set_destroy(m, f) (m)->destroy = (f)
+
+#endif /* OpenSSL 1.1 */
 
 static STACK_OF(X509_NAME) *
 tlso_ca_list( char * bundle, char * dir )
@@ -157,12 +197,18 @@ tlso_init( void )
 	(void) tlso_seed_PRNG( lo->ldo_tls_randfile );
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 	SSL_load_error_strings();
 	SSL_library_init();
 	OpenSSL_add_all_digests();
+#else
+	OPENSSL_init_ssl(0, NULL);
+#endif
 
 	/* FIXME: mod_ssl does this */
 	X509V3_add_standard_extensions();
+
+	tlso_bio_method = tlso_bio_setup();
 
 	return 0;
 }
@@ -175,9 +221,17 @@ tlso_destroy( void )
 {
 	struct ldapoptions *lo = LDAP_INT_GLOBAL_OPT();   
 
+	BIO_meth_free( tlso_bio_method );
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 	EVP_cleanup();
+#if OPENSSL_VERSION_NUMBER < 0x10000000
 	ERR_remove_state(0);
+#else
+	ERR_remove_thread_state(NULL);
+#endif
 	ERR_free_strings();
+#endif
 
 	if ( lo->ldo_tls_randfile ) {
 		LDAP_FREE( lo->ldo_tls_randfile );
@@ -195,7 +249,10 @@ static void
 tlso_ctx_ref( tls_ctx *ctx )
 {
 	tlso_ctx *c = (tlso_ctx *)ctx;
-	CRYPTO_add( &c->references, 1, CRYPTO_LOCK_SSL_CTX );
+#if OPENSSL_VERSION_NUMBER < 0x10100000
+#define	SSL_CTX_up_ref(ctx)	CRYPTO_add( &(ctx->references), 1, CRYPTO_LOCK_SSL_CTX )
+#endif
+	SSL_CTX_up_ref( c );
 }
 
 static void
@@ -253,10 +310,16 @@ tlso_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 		return -1;
 	}
 
-	if (lo->ldo_tls_cacertfile != NULL || lo->ldo_tls_cacertdir != NULL) {
+	if ( lo->ldo_tls_cacertfile == NULL && lo->ldo_tls_cacertdir == NULL ) {
+		if ( !SSL_CTX_set_default_verify_paths( ctx ) ) {
+			Debug( LDAP_DEBUG_ANY, "TLS: "
+				"could not use default certificate paths", 0, 0, 0 );
+			tlso_report_error();
+			return -1;
+		}
+	} else {
 		if ( !SSL_CTX_load_verify_locations( ctx,
-				lt->lt_cacertfile, lt->lt_cacertdir ) ||
-			!SSL_CTX_set_default_verify_paths( ctx ) )
+				lt->lt_cacertfile, lt->lt_cacertdir ) )
 		{
 			Debug( LDAP_DEBUG_ANY, "TLS: "
 				"could not load verify locations (file:`%s',dir:`%s').\n",
@@ -311,7 +374,7 @@ tlso_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 	if ( lo->ldo_tls_dhfile ) {
 		DH *dh = NULL;
 		BIO *bio;
-		dhplist *p;
+		SSL_CTX_set_options( ctx, SSL_OP_SINGLE_DH_USE );
 
 		if (( bio=BIO_new_file( lt->lt_dhfile,"r" )) == NULL ) {
 			Debug( LDAP_DEBUG_ANY,
@@ -320,16 +383,16 @@ tlso_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 			tlso_report_error();
 			return -1;
 		}
-		while (( dh=PEM_read_bio_DHparams( bio, NULL, NULL, NULL ))) {
-			p = LDAP_MALLOC( sizeof(dhplist) );
-			if ( p != NULL ) {
-				p->keylength = DH_size( dh ) * 8;
-				p->param = dh;
-				p->next = tlso_dhparams;
-				tlso_dhparams = p;
-			}
+		if (!( dh=PEM_read_bio_DHparams( bio, NULL, NULL, NULL ))) {
+			Debug( LDAP_DEBUG_ANY,
+				"TLS: could not read DH parameters file `%s'.\n",
+				lo->ldo_tls_dhfile,0,0);
+			tlso_report_error();
+			BIO_free( bio );
+			return -1;
 		}
 		BIO_free( bio );
+		SSL_CTX_set_tmp_dh( ctx, dh );
 	}
 
 	if ( tlso_opt_trace ) {
@@ -348,10 +411,9 @@ tlso_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 	SSL_CTX_set_verify( ctx, i,
 		lo->ldo_tls_require_cert == LDAP_OPT_X_TLS_ALLOW ?
 		tlso_verify_ok : tlso_verify_cb );
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 	SSL_CTX_set_tmp_rsa_callback( ctx, tlso_tmp_rsa_cb );
-	if ( lo->ldo_tls_dhfile ) {
-		SSL_CTX_set_tmp_dh_callback( ctx, tlso_tmp_dh_cb );
-	}
+#endif
 #ifdef HAVE_OPENSSL_CRL
 	if ( lo->ldo_tls_crlcheck ) {
 		X509_STORE *x509_s = SSL_CTX_get_cert_store( ctx );
@@ -446,8 +508,17 @@ tlso_session_my_dn( tls_session *sess, struct berval *der_dn )
 	if (!x) return LDAP_INVALID_CREDENTIALS;
 	
 	xn = X509_get_subject_name(x);
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 	der_dn->bv_len = i2d_X509_NAME( xn, NULL );
 	der_dn->bv_val = xn->bytes->data;
+#else
+	{
+		size_t len = 0;
+		der_dn->bv_val = NULL;
+		X509_NAME_get0_der( xn, (const unsigned char **)&der_dn->bv_val, &len );
+		der_dn->bv_len = len;
+	}
+#endif
 	/* Don't X509_free, the session is still using it */
 	return 0;
 }
@@ -473,8 +544,17 @@ tlso_session_peer_dn( tls_session *sess, struct berval *der_dn )
 		return LDAP_INVALID_CREDENTIALS;
 
 	xn = X509_get_subject_name(x);
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 	der_dn->bv_len = i2d_X509_NAME( xn, NULL );
 	der_dn->bv_val = xn->bytes->data;
+#else
+	{
+		size_t len = 0;
+		der_dn->bv_val = NULL;
+		X509_NAME_get0_der( xn, (const unsigned char **)&der_dn->bv_val, &len );
+		der_dn->bv_len = len;
+	}
+#endif
 	X509_free(x);
 	return 0;
 }
@@ -614,7 +694,7 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 		navas = X509_NAME_entry_count( xn );
 		for ( i=navas-1; i>=0; i-- ) {
 			ne = X509_NAME_get_entry( xn, i );
-			if ( !OBJ_cmp( ne->object, obj )) {
+			if ( !OBJ_cmp( X509_NAME_ENTRY_get_object(ne), obj )) {
 				cn = X509_NAME_ENTRY_get_data( ne );
 				break;
 			}
@@ -685,12 +765,17 @@ struct tls_data {
 	Sockbuf_IO_Desc		*sbiod;
 };
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000
+#define BIO_set_init(b, x)	b->init = x
+#define BIO_set_data(b, x)	b->ptr = x
+#define BIO_clear_flags(b, x)	b->flags &= ~(x)
+#define BIO_get_data(b)	b->ptr
+#endif
 static int
 tlso_bio_create( BIO *b ) {
-	b->init = 1;
-	b->num = 0;
-	b->ptr = NULL;
-	b->flags = 0;
+	BIO_set_init( b, 1 );
+	BIO_set_data( b, NULL );
+	BIO_clear_flags( b, ~0 );
 	return 1;
 }
 
@@ -699,9 +784,9 @@ tlso_bio_destroy( BIO *b )
 {
 	if ( b == NULL ) return 0;
 
-	b->ptr = NULL;		/* sb_tls_remove() will free it */
-	b->init = 0;
-	b->flags = 0;
+	BIO_set_data( b, NULL );		/* sb_tls_remove() will free it */
+	BIO_set_init( b, 0 );
+	BIO_clear_flags( b, ~0 );
 	return 1;
 }
 
@@ -713,7 +798,7 @@ tlso_bio_read( BIO *b, char *buf, int len )
 		
 	if ( buf == NULL || len <= 0 ) return 0;
 
-	p = (struct tls_data *)b->ptr;
+	p = (struct tls_data *)BIO_get_data(b);
 
 	if ( p == NULL || p->sbiod == NULL ) {
 		return 0;
@@ -740,7 +825,7 @@ tlso_bio_write( BIO *b, const char *buf, int len )
 	
 	if ( buf == NULL || len <= 0 ) return 0;
 	
-	p = (struct tls_data *)b->ptr;
+	p = (struct tls_data *)BIO_get_data(b);
 
 	if ( p == NULL || p->sbiod == NULL ) {
 		return 0;
@@ -780,19 +865,22 @@ tlso_bio_puts( BIO *b, const char *str )
 {
 	return tlso_bio_write( b, str, strlen( str ) );
 }
-	
-static BIO_METHOD tlso_bio_method =
+
+static BIO_METHOD *
+tlso_bio_setup( void )
 {
-	( 100 | 0x400 ),		/* it's a source/sink BIO */
-	"sockbuf glue",
-	tlso_bio_write,
-	tlso_bio_read,
-	tlso_bio_puts,
-	tlso_bio_gets,
-	tlso_bio_ctrl,
-	tlso_bio_create,
-	tlso_bio_destroy
-};
+	/* it's a source/sink BIO */
+	BIO_METHOD * method = BIO_meth_new( 100 | 0x400, "sockbuf glue" );
+	BIO_meth_set_write( method, tlso_bio_write );
+	BIO_meth_set_read( method, tlso_bio_read );
+	BIO_meth_set_puts( method, tlso_bio_puts );
+	BIO_meth_set_gets( method, tlso_bio_gets );
+	BIO_meth_set_ctrl( method, tlso_bio_ctrl );
+	BIO_meth_set_create( method, tlso_bio_create );
+	BIO_meth_set_destroy( method, tlso_bio_destroy );
+
+	return method;
+}
 
 static int
 tlso_sb_setup( Sockbuf_IO_Desc *sbiod, void *arg )
@@ -809,8 +897,8 @@ tlso_sb_setup( Sockbuf_IO_Desc *sbiod, void *arg )
 	
 	p->session = arg;
 	p->sbiod = sbiod;
-	bio = BIO_new( &tlso_bio_method );
-	bio->ptr = (void *)p;
+	bio = BIO_new( tlso_bio_method );
+	BIO_set_data( bio, p );
 	SSL_set_bio( p->session, bio, bio );
 	sbiod->sbiod_pvt = p;
 	return 0;
@@ -1040,9 +1128,9 @@ tlso_verify_cb( int ok, X509_STORE_CTX *ctx )
 			certerr, 0, 0 );
 	}
 	if ( sname )
-		CRYPTO_free ( sname );
+		OPENSSL_free ( sname );
 	if ( iname )
-		CRYPTO_free ( iname );
+		OPENSSL_free ( iname );
 #ifdef HAVE_EBCDIC
 	if ( certerr ) LDAP_FREE( certerr );
 #endif
@@ -1082,6 +1170,7 @@ tlso_report_error( void )
 	}
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 static RSA *
 tlso_tmp_rsa_cb( SSL *ssl, int is_export, int key_length )
 {
@@ -1112,6 +1201,7 @@ tlso_tmp_rsa_cb( SSL *ssl, int is_export, int key_length )
 	}
 	return tmp_rsa;
 }
+#endif /* OPENSSL_VERSION_NUMBER < 1.1 */
 
 static int
 tlso_seed_PRNG( const char *randfile )
@@ -1128,11 +1218,13 @@ tlso_seed_PRNG( const char *randfile )
 		 * The fact is that when $HOME is NULL, .rnd is used.
 		 */
 		randfile = RAND_file_name( buffer, sizeof( buffer ) );
-
-	} else if (RAND_egd(randfile) > 0) {
+	}
+#ifndef OPENSSL_NO_EGD
+	else if (RAND_egd(randfile) > 0) {
 		/* EGD socket */
 		return 0;
 	}
+#endif
 
 	if (randfile == NULL) {
 		Debug( LDAP_DEBUG_ANY,
@@ -1160,108 +1252,6 @@ tlso_seed_PRNG( const char *randfile )
 	return 0;
 }
 
-struct dhinfo {
-	int keylength;
-	const char *pem;
-	size_t size;
-};
-
-
-/* From the OpenSSL 0.9.7 distro */
-static const char tlso_dhpem512[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MEYCQQDaWDwW2YUiidDkr3VvTMqS3UvlM7gE+w/tlO+cikQD7VdGUNNpmdsp13Yn\n\
-a6LT1BLiGPTdHghM9tgAPnxHdOgzAgEC\n\
------END DH PARAMETERS-----\n";
-
-static const char tlso_dhpem1024[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIGHAoGBAJf2QmHKtQXdKCjhPx1ottPb0PMTBH9A6FbaWMsTuKG/K3g6TG1Z1fkq\n\
-/Gz/PWk/eLI9TzFgqVAuPvr3q14a1aZeVUMTgo2oO5/y2UHe6VaJ+trqCTat3xlx\n\
-/mNbIK9HA2RgPC3gWfVLZQrY+gz3ASHHR5nXWHEyvpuZm7m3h+irAgEC\n\
------END DH PARAMETERS-----\n";
-
-static const char tlso_dhpem2048[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIIBCAKCAQEA7ZKJNYJFVcs7+6J2WmkEYb8h86tT0s0h2v94GRFS8Q7B4lW9aG9o\n\
-AFO5Imov5Jo0H2XMWTKKvbHbSe3fpxJmw/0hBHAY8H/W91hRGXKCeyKpNBgdL8sh\n\
-z22SrkO2qCnHJ6PLAMXy5fsKpFmFor2tRfCzrfnggTXu2YOzzK7q62bmqVdmufEo\n\
-pT8igNcLpvZxk5uBDvhakObMym9mX3rAEBoe8PwttggMYiiw7NuJKO4MqD1llGkW\n\
-aVM8U2ATsCun1IKHrRxynkE1/MJ86VHeYYX8GZt2YA8z+GuzylIOKcMH6JAWzMwA\n\
-Gbatw6QwizOhr9iMjZ0B26TE3X8LvW84wwIBAg==\n\
------END DH PARAMETERS-----\n";
-
-static const char tlso_dhpem4096[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIICCAKCAgEA/urRnb6vkPYc/KEGXWnbCIOaKitq7ySIq9dTH7s+Ri59zs77zty7\n\
-vfVlSe6VFTBWgYjD2XKUFmtqq6CqXMhVX5ElUDoYDpAyTH85xqNFLzFC7nKrff/H\n\
-TFKNttp22cZE9V0IPpzedPfnQkE7aUdmF9JnDyv21Z/818O93u1B4r0szdnmEvEF\n\
-bKuIxEHX+bp0ZR7RqE1AeifXGJX3d6tsd2PMAObxwwsv55RGkn50vHO4QxtTARr1\n\
-rRUV5j3B3oPMgC7Offxx+98Xn45B1/G0Prp11anDsR1PGwtaCYipqsvMwQUSJtyE\n\
-EOQWk+yFkeMe4vWv367eEi0Sd/wnC+TSXBE3pYvpYerJ8n1MceI5GQTdarJ77OW9\n\
-bGTHmxRsLSCM1jpLdPja5jjb4siAa6EHc4qN9c/iFKS3PQPJEnX7pXKBRs5f7AF3\n\
-W3RIGt+G9IVNZfXaS7Z/iCpgzgvKCs0VeqN38QsJGtC1aIkwOeyjPNy2G6jJ4yqH\n\
-ovXYt/0mc00vCWeSNS1wren0pR2EiLxX0ypjjgsU1mk/Z3b/+zVf7fZSIB+nDLjb\n\
-NPtUlJCVGnAeBK1J1nG3TQicqowOXoM6ISkdaXj5GPJdXHab2+S7cqhKGv5qC7rR\n\
-jT6sx7RUr0CNTxzLI7muV2/a4tGmj0PSdXQdsZ7tw7gbXlaWT1+MM2MCAQI=\n\
------END DH PARAMETERS-----\n";
-
-static const struct dhinfo tlso_dhpem[] = {
-	{ 512, tlso_dhpem512, sizeof(tlso_dhpem512) },
-	{ 1024, tlso_dhpem1024, sizeof(tlso_dhpem1024) },
-	{ 2048, tlso_dhpem2048, sizeof(tlso_dhpem2048) },
-	{ 4096, tlso_dhpem4096, sizeof(tlso_dhpem4096) },
-	{ 0, NULL, 0 }
-};
-
-static DH *
-tlso_tmp_dh_cb( SSL *ssl, int is_export, int key_length )
-{
-	struct dhplist *p = NULL;
-	BIO *b = NULL;
-	DH *dh = NULL;
-	int i;
-
-	/* Do we have params of this length already? */
-	LDAP_MUTEX_LOCK( &tlso_dh_mutex );
-	for ( p = tlso_dhparams; p; p=p->next ) {
-		if ( p->keylength == key_length ) {
-			LDAP_MUTEX_UNLOCK( &tlso_dh_mutex );
-			return p->param;
-		}
-	}
-
-	/* No - check for hardcoded params */
-
-	for (i=0; tlso_dhpem[i].keylength; i++) {
-		if ( tlso_dhpem[i].keylength == key_length ) {
-			b = BIO_new_mem_buf( (char *)tlso_dhpem[i].pem, tlso_dhpem[i].size );
-			break;
-		}
-	}
-
-	if ( b ) {
-		dh = PEM_read_bio_DHparams( b, NULL, NULL, NULL );
-		BIO_free( b );
-	}
-
-	/* Generating on the fly is expensive/slow... */
-	if ( !dh ) {
-		dh = DH_generate_parameters( key_length, DH_GENERATOR_2, NULL, NULL );
-	}
-	if ( dh ) {
-		p = LDAP_MALLOC( sizeof(struct dhplist) );
-		if ( p != NULL ) {
-			p->keylength = key_length;
-			p->param = dh;
-			p->next = tlso_dhparams;
-			tlso_dhparams = p;
-		}
-	}
-
-	LDAP_MUTEX_UNLOCK( &tlso_dh_mutex );
-	return dh;
-}
 
 tls_impl ldap_int_tls_impl = {
 	"OpenSSL",

@@ -5,16 +5,7 @@ openldap (2.4.44+dfsg-1) unstable; urgency=medium
    security concerns. Please see <https://bugs.debian.org/795428> for
    more information.
 
-   The slapd-smbk5pwd package is no longer built with Kerberos support,
-   as the heimdal package is being removed at the request of its
-   maintainers. On upgrade, if slapd is using a slapd.conf file, any
-   instances of 'smbk5pwd-enable krb5' will be commented out
-   automatically. If slapd is using dynamic configuration (cn=config),
-   any instances of 'olcSmbK5PwdEnable: krb5' must be disabled manually
-   before upgrading. Please see <https://bugs.debian.org/836885> for
-   more information.
-
- -- Ryan Tandy <ryan@nardis.ca>  Sat, 29 Oct 2016 20:36:03 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 15 Mar 2016 03:59:27 +0000
 
 openldap (2.4.23-3) unstable; urgency=low
 

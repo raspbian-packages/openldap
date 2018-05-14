@@ -70,17 +70,6 @@ check_ppolicy_schema() {						# {{{
 	# schema automatically in postinst.
 }
 # }}}
-ensure_smbk5pwd_krb5_disabled() {					# {{{
-	local config_ldif="$1"
-
-	if grep -q '^olcSmbK5PwdEnable:\s\+krb5' "$config_ldif"; then
-		db_fset slapd/must_disable_smbk5pwd_krb5 seen false
-		db_input critical slapd/must_disable_smbk5pwd_krb5 || true
-		db_go || true
-		exit 1
-	fi
-}
-# }}}
 preinst_check_config() {						# {{{
 # Check whether manual config changes are required before upgrading
 	if ! previous_version_older '2.4.44+dfsg-1~'; then
@@ -101,18 +90,27 @@ preinst_check_config() {						# {{{
 	normalize_ldif "$dumped_ldif" > "$config_ldif"
 
 	check_ppolicy_schema "$config_ldif"
-	ensure_smbk5pwd_krb5_disabled "$config_ldif"
 }
 # }}}
 
 # If we are upgrading from an old version then stop slapd and attempt to
-# slapcat out the data so we can use it in postinst to do the upgrade
+# slapcat out the data so we can use it in postinst to do the upgrade.
+# If slapd was removed and is being reinstalled, slapcat is not
+# available at this time, so the data should have been dumped before the
+# old slapd was removed.
 
 if [ "$MODE" = upgrade ]; then
 	dump_config
+fi
+
+if [ "$MODE" = upgrade ] || [ "$MODE" = install -a -n "$OLD_VERSION" ]; then
+	# Do not assume slapcat is available in this phase
 	if [ -d "$SLAPD_CONF" ]; then
 		preinst_check_config
 	fi
+fi
+
+if [ "$MODE" = upgrade ]; then
 	dump_databases
 fi
 

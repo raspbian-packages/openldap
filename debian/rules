@@ -4,7 +4,7 @@
 # want the checks for DFSG-freeness.
 #DFSG_NONFREE = 1
 
-export DEB_CFLAGS_MAINT_APPEND := -Wall -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
+export DEB_CFLAGS_MAINT_APPEND := -Wall -Wno-format-extra-args -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 export DEB_BUILD_MAINT_OPTIONS := hardening=+pie,+bindnow
 
 # Workaround for bad glibc behavior when resolving localhost
@@ -13,6 +13,7 @@ export RESOLV_MULTI = off
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
@@ -60,7 +61,7 @@ get-orig-source:
 	rm -r openldap-$(VERSION)+dfsg
 	gzip -9 openldap_$(VERSION)+dfsg.orig.tar
 
-DH = dh $@ --with autoreconf --builddirectory=$(builddir) --parallel
+DH = dh $@ --builddirectory=$(builddir)
 .PHONY: build
 build:
 	$(DH)
@@ -107,6 +108,13 @@ ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	$(MAKE) -C contrib/slapd-modules/lastbind CC=$(CC)
 	$(MAKE) -C contrib/slapd-modules/passwd/sha2 CC=$(CC)
 endif
+
+override_dh_auto_test:
+ifeq ($(DEB_HOST_ARCH),ppc64el)
+	# Disable test060-mt-host on ppc64el until #866122 is fixed.
+	rm -f tests/scripts/test060-mt-hot
+endif
+	dh_auto_test
 
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
@@ -161,11 +169,11 @@ override_dh_fixperms-arch:
 endif
 
 override_dh_strip:
-	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
+	dh_strip -plibldap-2.4-2 --dbgsym-migration='libldap-2.4-2-dbg (<< 2.4.45+dfsg-1~)'
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	dh_strip -pslapd --dbg-package=slapd-dbg
+	dh_strip -pslapd --dbgsym-migration='slapd-dbg (<< 2.4.45+dfsg-1~)'
 endif
-	dh_strip -Nlibldap-2.4-2 -Nslapd
+	dh_strip --remaining-packages
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# hardlink these so not confined by apparmor; do this here and not
 	# in dh_link so that dh_strip doesn't get confused and put the wrong
@@ -194,7 +202,7 @@ endif
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 override_dh_installdeb:
 	dh_installdeb
-	perl -w debian/dh_installscripts-common -pslapd -pslapd-smbk5pwd debian/slapd.scripts-common
+	perl -w debian/dh_installscripts-common -p slapd
 endif
 
 override_dh_auto_clean:

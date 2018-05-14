@@ -1,6 +1,6 @@
 --- a/contrib/slapd-modules/smbk5pwd/Makefile
 +++ b/contrib/slapd-modules/smbk5pwd/Makefile
-@@ -14,34 +14,34 @@
+@@ -14,34 +14,35 @@
  
  LDAP_SRC = ../../..
  LDAP_BUILD = $(LDAP_SRC)
@@ -15,20 +15,21 @@
 -SSL_LIB = -lcrypto
 +SSL_LIB = -lnettle
  
- HEIMDAL_INC = -I/usr/heimdal/include
- HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
+-HEIMDAL_INC = -I/usr/heimdal/include
+-HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
++HEIMDAL_INC = $(shell krb5-config.heimdal --cflags kadm-server)
++HEIMDAL_LIB = $(shell krb5-config.heimdal --libs kadm-server)
  
 -LIBTOOL = $(LDAP_BUILD)/libtool
 +LIBTOOL = $(LDAP_BUILD)/debian/build/libtool
  CC = gcc
  OPT = -g -O2 -Wall
  # Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
--DEFS = -DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
--INCS = $(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
+ DEFS = -DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
+ INCS = $(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
 -LIBS = $(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
-+DEFS = -DDO_SAMBA -DDO_SHADOW
-+INCS = $(LDAP_INC) $(SSL_INC)
-+LIBS = $(LDAP_LIB) $(SSL_LIB)
++# put /usr/lib/heimdal before /usr/lib in case libkrb5-dev is installed, #745356
++LIBS = $(HEIMDAL_LIB) $(LDAP_LIB) $(SSL_LIB)
  
  PROGRAMS = smbk5pwd.la
  LTVER = 0:0:0
@@ -46,7 +47,7 @@
  
  .SUFFIXES: .c .o .lo
  
-@@ -55,7 +55,7 @@
+@@ -55,7 +56,7 @@
  	-rpath $(moduledir) -module -o $@ $? $(LIBS)
  
  clean:

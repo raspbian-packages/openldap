@@ -155,45 +155,31 @@ Type: select
 __Choices: abort installation, continue regardless
 DefaultChoice: abort installation
 #flag:comment:2
-# "ppolicy", "pwdMaxRecordedFailure", and "cn=config" are not translatable.
-#flag:translate!:5,7
+# "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
+#flag:comment:3
+# This paragraph is followed by the path to the generated file (not
+# translatable). The sentence continues in the following paragraph.
+#flag:comment:5
+# This paragraph continues the sentence started in the previous
+# paragraph. It is followed by a command line.
+#flag:translate!:4,6
 _Description: Manual ppolicy schema update recommended
- In the version of slapd about to be installed, the ppolicy overlay
- requires the new pwdMaxRecordedFailure attribute to be defined in the
- ppolicy schema. The schema contained in the cn=config database does not
- currently include this attribute.
+ The new version of the Password Policy (ppolicy) overlay requires the
+ schema to define the pwdMaxRecordedFailure attribute type, which is not
+ present in the schema currently in use. It is recommended to abort the
+ upgrade now, and to update the ppolicy schema before upgrading slapd.
+ If replication is in use, the schema update should be applied on every
+ server before continuing with the upgrade.
  .
- You may choose to continue the installation. In this case, the
- maintainer scripts will add the new attribute automatically during the
- upgrade. However, the change will not be acted on by slapd overlays,
- and replication with other servers may be affected.
- .
- The ppolicy schema can be updated by applying the changes found in the
- following LDIF file:
+ An LDIF file has been generated with the changes required for the upgrade:
  .
  ${ldif}
  .
- If slapd is using the default access control rules, after starting
- slapd, the changes can be applied using the following command:
+ so if slapd is using the default access control rules, these changes can be
+ applied (after starting slapd) by using the command:
  .
  ldapmodify -H ldapi:/// -Y EXTERNAL -f ${ldif}
  .
- It is recommended to abort the upgrade now and to update the ppolicy
- schema before upgrading slapd. If replication is in use, the schema
- update should be applied on every server before continuing with the
- upgrade.
-
-Template: slapd/smbk5pwd_krb5_disabled
-Type: error
-_Description: Kerberos support disabled for smbk5pwd overlay
- The smbk5pwd overlay is no longer built with Kerberos support. The
- "smbk5pwd-enable krb5" setting has been automatically disabled in the
- slapd configuration file.
-
-Template: slapd/must_disable_smbk5pwd_krb5
-Type: error
-#flag:translate!:4,6
-_Description: Disable Kerberos in smbk5pwd before upgrading slapd
- The smbk5pwd overlay is no longer built with Kerberos support. The
- "olcSmbK5PwdEnable: krb5" setting must be removed from any instances of
- the smbk5pwd overlay before upgrading slapd.
+ If instead you choose to continue the installation, the new attribute
+ type will be added automatically, but the change will not be acted on
+ by slapd overlays, and replication with other servers may be affected.

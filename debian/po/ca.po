@@ -1,20 +1,20 @@
 # openldap po-debconf translation to Catalan.
 # This file is distributed under the same license as the openldap package.
-# Innocent De Marchi <tangram.peces@gmail.com>, 2011-2014.
+# Innocent De Marchi <tangram.peces@gmail.com>, 2011-2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 2.4.40-2\n"
+"Project-Id-Version: openldap 2.4.44+dfsg-4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2016-11-23 05:25+0000\n"
-"PO-Revision-Date: 2014-11-08 17:50+0100\n"
+"POT-Creation-Date: 2017-06-25 02:57+0000\n"
+"PO-Revision-Date: 2017-01-19 19:35+0100\n"
 "Last-Translator: Innocent De Marchi <tangram.peces@gmail.com>\n"
 "Language-Team: catalan <debian-l10n-catalan@lists.debian.org>\n"
 "Language: ca_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.11\n"
 
 #. Type: boolean
 #. Description
@@ -366,95 +366,76 @@ msgstr "Consulteu «/usr/share/doc/slapd/README.Debian.gz» per a més detalls."
 #. Choices
 #: ../slapd.templates:17001
 msgid "abort installation"
-msgstr ""
+msgstr "aturar la instal·lació"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:17001
 msgid "continue regardless"
-msgstr ""
+msgstr "continua sense tenir en compte"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid "Manual ppolicy schema update recommended"
 msgstr ""
+"Es recomana l'actualització manual de la directiva de contrasenya («ppolicy»)"
 
 #. Type: select
 #. Description
-#. "ppolicy", "pwdMaxRecordedFailure", and "cn=config" are not translatable.
+#. "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
 #: ../slapd.templates:17002
 msgid ""
-"In the version of slapd about to be installed, the ppolicy overlay requires "
-"the new pwdMaxRecordedFailure attribute to be defined in the ppolicy schema. "
-"The schema contained in the cn=config database does not currently include "
-"this attribute."
+"The new version of the Password Policy (ppolicy) overlay requires the schema "
+"to define the pwdMaxRecordedFailure attribute type, which is not present in "
+"the schema currently in use. It is recommended to abort the upgrade now, and "
+"to update the ppolicy schema before upgrading slapd. If replication is in "
+"use, the schema update should be applied on every server before continuing "
+"with the upgrade."
 msgstr ""
+"La nova versió de la superposició de directiva de contrasenya («ppolicy») "
+"requereix que l'esquema defineixi el tipus d'atribut "
+"«pwdMaxRecordedFailure», que no està inclòs en l'esquema actualment en ús. "
+"És recomana aturar ara l'actualització, i actualitzar la directiva de "
+"contrasenya abans d'actualitzar «slapd». Si la replicació està en marxa, "
+"l'actualització de l'esquema s'ha d'aplicar a cada servidor abans de "
+"continuar amb l'actualització."
+
+#. Type: select
+#. Description
+#. This paragraph is followed by the path to the generated file (not
+#. translatable). The sentence continues in the following paragraph.
+#: ../slapd.templates:17002
+msgid ""
+"An LDIF file has been generated with the changes required for the upgrade:"
+msgstr ""
+"Un s'ha generat un fitxer LDIF amb els canvis necessaris per a "
+"l'actualització:"
+
+#. Type: select
+#. Description
+#. This paragraph continues the sentence started in the previous
+#. paragraph. It is followed by a command line.
+#: ../slapd.templates:17002
+msgid ""
+"so if slapd is using the default access control rules, these changes can be "
+"applied (after starting slapd) by using the command:"
+msgstr ""
+"per que si «slapd» fa servir les regles d'accés predeterminades, aquests "
+"canvis es poden fer efectius (després d'iniciar «slapd») fent servir l'ordre:"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid ""
-"You may choose to continue the installation. In this case, the maintainer "
-"scripts will add the new attribute automatically during the upgrade. "
-"However, the change will not be acted on by slapd overlays, and replication "
-"with other servers may be affected."
+"If instead you choose to continue the installation, the new attribute type "
+"will be added automatically, but the change will not be acted on by slapd "
+"overlays, and replication with other servers may be affected."
 msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"The ppolicy schema can be updated by applying the changes found in the "
-"following LDIF file:"
-msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"If slapd is using the default access control rules, after starting slapd, "
-"the changes can be applied using the following command:"
-msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"It is recommended to abort the upgrade now and to update the ppolicy schema "
-"before upgrading slapd. If replication is in use, the schema update should "
-"be applied on every server before continuing with the upgrade."
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid "Kerberos support disabled for smbk5pwd overlay"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"The smbk5pwd overlay is no longer built with Kerberos support. The "
-"\"smbk5pwd-enable krb5\" setting has been automatically disabled in the "
-"slapd configuration file."
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid "Disable Kerberos in smbk5pwd before upgrading slapd"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"The smbk5pwd overlay is no longer built with Kerberos support. The "
-"\"olcSmbK5PwdEnable: krb5\" setting must be removed from any instances of "
-"the smbk5pwd overlay before upgrading slapd."
-msgstr ""
+"En canvi, si decidiu continuar amb la instal·lació, el nou tipus d'atribut "
+"s'afegirà automàticament, però el canvi no es veurà afectat per les "
+"superposicions de «slapd», i la replicació amb altres servidors es pot veure "
+"afectada."
 
 #~ msgid "Allow LDAPv2 protocol?"
 #~ msgstr "Desitjau permetre el protocol LDAPv2?"

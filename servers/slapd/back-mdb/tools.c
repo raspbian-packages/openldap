@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2011-2016 The OpenLDAP Foundation.
+ * Copyright 2011-2018 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -173,6 +173,14 @@ int mdb_tool_entry_close(
 	if( cursor ) {
 		mdb_cursor_close( cursor );
 		cursor = NULL;
+	}
+	{
+		struct mdb_info *mdb = be->be_private;
+		if ( mdb ) {
+			int i;
+			for (i=0; i<mdb->mi_nattrs; i++)
+				mdb->mi_attrs[i]->ai_cursor = NULL;
+		}
 	}
 	if( mdb_tool_txn ) {
 		int rc;
@@ -422,7 +430,6 @@ static int mdb_tool_next_id(
 	struct berval *text,
 	int hole )
 {
-	struct mdb_info *mdb = (struct mdb_info *) op->o_bd->be_private;
 	struct berval dn = e->e_name;
 	struct berval ndn = e->e_nname;
 	struct berval pdn, npdn, nmatched;
@@ -1311,7 +1318,6 @@ mdb_dn2id_upgrade( BackendDB *be ) {
 	MDB_txn *mt;
 	MDB_cursor *mc = NULL;
 	MDB_val key, data;
-	char *ptr;
 	int rc, writes=0, depth=0;
 	int enable_meter = 0;
 	ID id = 0, *num, count = 0;

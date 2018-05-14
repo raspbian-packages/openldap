@@ -1,14 +1,14 @@
 # Vietnamese translation for OpenLDAP.
 # Copyright © 2010 Free Software Foundation, Inc.
 # Clytie Siddall <clytie@riverland.net.au>, 2005-2010.
-# Trần Ngọc Quân <vnwildman@gmail.com>, 2014.
+# Trần Ngọc Quân <vnwildman@gmail.com>, 2014, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.4.40-2\n"
+"Project-Id-Version: openldap 2.4.44+dfsg-4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2016-11-23 05:25+0000\n"
-"PO-Revision-Date: 2014-10-26 08:53+0700\n"
+"POT-Creation-Date: 2017-06-25 02:57+0000\n"
+"PO-Revision-Date: 2017-02-09 13:57+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <debian-l10n-vietnamese@lists.debian.org>\n"
 "Language: vi\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: LocFactoryEditor 1.8\n"
+"X-Generator: Gtranslator 2.91.7\n"
 
 #. Type: boolean
 #. Description
@@ -110,7 +110,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:4001
 msgid "Move old database?"
-msgstr "Dời cơ sở dữ liệu cũ?"
+msgstr "Di chuyển cơ sở dữ liệu cũ?"
 
 #. Type: boolean
 #. Description
@@ -129,7 +129,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:5001
 msgid "Retry configuration?"
-msgstr "Thử lại cấu hình?"
+msgstr "Thử cấu hình lại?"
 
 #. Type: boolean
 #. Description
@@ -208,13 +208,14 @@ msgid ""
 "Please enter the admin password for your LDAP directory again to verify that "
 "you have typed it correctly."
 msgstr ""
-"Hãy nhập lại mật khẩu quản trị cho thư mục LDAP, để xác nhận bạn đã gõ đúng."
+"Hãy nhập lại mật khẩu quản trị cho thư mục LDAP để xác nhận lại bạn đã gõ "
+"đúng."
 
 #. Type: note
 #. Description
 #: ../slapd.templates:10001
 msgid "Password mismatch"
-msgstr "Sai khớp mật khẩu"
+msgstr "Mật khẩu không khớp"
 
 #. Type: note
 #. Description
@@ -250,7 +251,7 @@ msgid ""
 msgstr ""
 "Chương trình “slapcat” bị lỗi trong khi giải nén thư mục LDAP. Có thể do một "
 "tập tin cấu hình sai (v.d. thiếu dòng “moduleload” để hỗ trợ cơ sở dữ liệu "
-"hậu phương)."
+"ứng dụng chạy phía sau)."
 
 #. Type: error
 #. Description
@@ -263,10 +264,11 @@ msgid ""
 "you should move the old database files back into place, fix whatever caused "
 "slapcat to fail, and run:"
 msgstr ""
-"Sự thất bại này sẽ cũng gây ra tiến trình “slapadd” thất bại về sau. Các tập "
-"tin cơ sở dữ liệu cũ sẽ được di chuyển vào thư mục “/var/backups”. Muốn thử "
-"lại tiến trình nâng cấp thì bạn nên di chuyển các tập tin cơ sở dữ liệu cũ "
-"về nơi gốc, sửa chữa trường hợp gây ra slapcat bị lỗi, và chạy câu lệnh này:"
+"Lỗi này cũng sẽ là nguyên nhân làm cho tiến trình “slapadd” thất bại về sau. "
+"Các tập tin cơ sở dữ liệu cũ sẽ được di chuyển vào thư mục “/var/backups”. "
+"Muốn thử lại tiến trình nâng cấp thì bạn nên di chuyển các tập tin cơ sở dữ "
+"liệu cũ về nơi gốc, sửa chữa những gì làm cho slapcat bị lỗi, và chạy câu "
+"lệnh:"
 
 #. Type: error
 #. Description
@@ -284,7 +286,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:15001
 msgid "Database backend to use:"
-msgstr "Hậu phương cơ sở dữ liệu cần dùng:"
+msgstr "Ứng dụng chạy cơ sở dữ liệu cần dùng:"
 
 #. Type: select
 #. Description
@@ -303,8 +305,8 @@ msgid ""
 "The MDB backend is recommended. MDB uses a new storage format and requires "
 "less configuration than BDB or HDB."
 msgstr ""
-"Khuyên bạn dùng hậu phương MDB. MDB dùng định dạng lưu trữ mới và phần cấu "
-"hình cũng ít hơn là BDB hay HDB."
+"Khuyên bạn dùng ứng dụng chạy phía sau MDB. MDB dùng định dạng lưu trữ mới "
+"và phần cấu hình cũng ít hơn là BDB hay HDB."
 
 # The BDB backend is the recommended choice of the OpenLDAP developers.
 # When using the BDB backend make sure that you configure the underlying
@@ -363,95 +365,71 @@ msgstr "Đọc /usr/share/doc/slapd/README.Debian.gz để biết thêm chi ti�
 #. Choices
 #: ../slapd.templates:17001
 msgid "abort installation"
-msgstr ""
+msgstr "hủy bỏ cài đặt"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:17001
 msgid "continue regardless"
-msgstr ""
+msgstr "vẫn tiếp tục"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid "Manual ppolicy schema update recommended"
-msgstr ""
+msgstr "Khuyến khích cập nhật lược đồ ppolicy"
 
 #. Type: select
 #. Description
-#. "ppolicy", "pwdMaxRecordedFailure", and "cn=config" are not translatable.
+#. "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
 #: ../slapd.templates:17002
 msgid ""
-"In the version of slapd about to be installed, the ppolicy overlay requires "
-"the new pwdMaxRecordedFailure attribute to be defined in the ppolicy schema. "
-"The schema contained in the cn=config database does not currently include "
-"this attribute."
+"The new version of the Password Policy (ppolicy) overlay requires the schema "
+"to define the pwdMaxRecordedFailure attribute type, which is not present in "
+"the schema currently in use. It is recommended to abort the upgrade now, and "
+"to update the ppolicy schema before upgrading slapd. If replication is in "
+"use, the schema update should be applied on every server before continuing "
+"with the upgrade."
 msgstr ""
+"Phiên bản mới của overlay Chính sách Mật khẩu (ppolicy) cần lược đồ để định "
+"nghĩa kiểu thuộc tính pwdMaxRecordedFailure, cái mà không hiện diện trong "
+"lược đồ hiện đang dùng. Khuyến khích bạn bây giờ bãi bỏ nâng cấp, và cập "
+"nhật lược đồ trước khi nâng cấp slapd. Nếu bản sao đang dùng, cập nhật lược "
+"đồ có thể được áp dụng cho mọi máy phục vụ trước khi tiếp tục với nâng cấp."
+
+#. Type: select
+#. Description
+#. This paragraph is followed by the path to the generated file (not
+#. translatable). The sentence continues in the following paragraph.
+#: ../slapd.templates:17002
+msgid ""
+"An LDIF file has been generated with the changes required for the upgrade:"
+msgstr "Một tập tin LDIF đã được tạo với các thay đổi theo yêu cầu cập nhật:"
+
+#. Type: select
+#. Description
+#. This paragraph continues the sentence started in the previous
+#. paragraph. It is followed by a command line.
+#: ../slapd.templates:17002
+msgid ""
+"so if slapd is using the default access control rules, these changes can be "
+"applied (after starting slapd) by using the command:"
+msgstr ""
+"như vậy nếu slapd đang sử dụng các quy tắc điều khiển truy cập mặc định, "
+"những thay đổi có thể được áp dụng (sau khi khởi động slapd) bằng cách dùng "
+"lệnh:"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid ""
-"You may choose to continue the installation. In this case, the maintainer "
-"scripts will add the new attribute automatically during the upgrade. "
-"However, the change will not be acted on by slapd overlays, and replication "
-"with other servers may be affected."
+"If instead you choose to continue the installation, the new attribute type "
+"will be added automatically, but the change will not be acted on by slapd "
+"overlays, and replication with other servers may be affected."
 msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"The ppolicy schema can be updated by applying the changes found in the "
-"following LDIF file:"
-msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"If slapd is using the default access control rules, after starting slapd, "
-"the changes can be applied using the following command:"
-msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"It is recommended to abort the upgrade now and to update the ppolicy schema "
-"before upgrading slapd. If replication is in use, the schema update should "
-"be applied on every server before continuing with the upgrade."
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid "Kerberos support disabled for smbk5pwd overlay"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"The smbk5pwd overlay is no longer built with Kerberos support. The "
-"\"smbk5pwd-enable krb5\" setting has been automatically disabled in the "
-"slapd configuration file."
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid "Disable Kerberos in smbk5pwd before upgrading slapd"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"The smbk5pwd overlay is no longer built with Kerberos support. The "
-"\"olcSmbK5PwdEnable: krb5\" setting must be removed from any instances of "
-"the smbk5pwd overlay before upgrading slapd."
-msgstr ""
+"Nếu thay vào đó bạn chọn tiếp tục cài đặt, kiểu thuộc tính mới sẽ được thêm "
+"một cách tự động, nhưng thay đổi sẽ không được thực hiện trên các overlay "
+"slapd, và bản sao với các máy phục vụ khác có thể chịu tác động."
 
 #~ msgid "Allow LDAPv2 protocol?"
 #~ msgstr "Cho phép giao thức LDAPv2?"

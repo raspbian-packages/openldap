@@ -22,6 +22,10 @@ database_dumping_enabled() {						# {{{
 # Return success if yes.
 # Usage: if database_dumping_enabled; then ... fi
 
+	# If the package is being removed, dump unconditionally as we
+	# don't know whether the next version will require reload.
+	[ "$MODE" = remove ] && return 0
+
 	db_get slapd/dump_database
 	case "$RET" in
 	always)
@@ -101,24 +105,10 @@ update_permissions() {	# {{{
 }
 # }}}
 update_databases_permissions() {	# {{{
-	get_suffix | while read suffix; do
+	get_suffix | while read -r suffix; do
 		dbdir=`get_directory "$suffix"`
 		update_permissions "$dbdir"
 	done
-}
-# }}}
-update_slapd_conf_permissions() {	# {{{
-	if [ -n "$SLAPD_USER" ] && [ -n "$SLAPD_GROUP" ] ; then
-		if perl -e '
-			($o, $m) = (stat $ARGV[0])[4,2];
-			exit 1 unless defined $o;
-			exit 0 if ($o == 0 && ($m & 040) == 0);
-			exit 1;
-		' "$SLAPD_CONF"; then
-			chgrp "$SLAPD_GROUP" "$SLAPD_CONF"
-			chmod g+r "$SLAPD_CONF"
-		fi
-	fi
 }
 # }}}
 # }}}
@@ -192,11 +182,11 @@ dump_databases() {							# {{{
 
 	dir=`database_dumping_destdir`
 	echo >&2 "  Dumping to $dir: "
-	(get_suffix | while read suffix; do
+	(get_suffix | while read -r suffix; do
 		dbdir=`get_directory "$suffix"`
 		if [ -n "$dbdir" ]; then
 			file="$dir/$suffix.ldif"
-			echo -n "  - directory $suffix... " >&2
+			printf '  - directory %s... ' "$suffix" >&2
 			# Need to support slapd.d migration from preinst
 			if [ -f "${SLAPD_CONF}" ]; then
 				slapcat_opts="-g -f ${SLAPD_CONF}"
@@ -225,7 +215,7 @@ load_databases() {							# {{{
 	echo >&2 "  Loading from $dir: "
 	# restore by increasing suffix length due to possibly glued databases
 	get_suffix | awk '{ print length, $0 }' | sort -n | cut -d ' ' -f 2- \
-	| while read suffix; do
+	| while read -r suffix; do
 		dbdir=`get_directory "$suffix"`
 		if [ -z "$dbdir" ]; then
 			continue
@@ -237,11 +227,11 @@ load_databases() {							# {{{
 		fi
 
 		file="$dir/$suffix.ldif"
-		echo -n "  - directory $suffix... " >&2
+		printf '  - directory %s... ' "$suffix" >&2
 
 		# If there is an old DB_CONFIG file, restore it before
 		# running slapadd
-		backupdir=`compute_backup_path -n "$dbdir" "$suffix"`
+		backupdir="$(compute_backup_path -n "$dbdir" "$suffix")"
 		if [ -e "$backupdir"/DB_CONFIG ]; then
 			cp -a "$backupdir"/DB_CONFIG "$dbdir"/
 		fi
@@ -277,7 +267,7 @@ EOF
 # }}}
 move_incompatible_databases_away() {					# {{{
 	echo >&2 "  Moving old database directories to /var/backups:"
-	(get_suffix | while read suffix; do
+	(get_suffix | while read -r suffix; do
 		dbdir=`get_directory "$suffix"`
 		move_old_database_away "$dbdir" "$suffix" <&5
 	done) 5<&0 </dev/null
@@ -291,93 +281,13 @@ move_incompatible_databases_away() {					# {{{
 # For some operations we have to know the slapd configuration. These 
 # functions are for parsing the slapd configuration file.
 
-merge_logical_lines() {							# {{{
-# slapd supports continuation lines in the slapd.conf. Continuation lines 
-# start with spaces and are merged with the preceding line. This function
-# uses perl to merge physical lines into logical lines as seen by the 
-# slapd config parser.
-# Usage: merge_logical_lines < input > output
-
-	perl -pe 'BEGIN { undef $/ }; s/\n(?!\n)\s+/ /g;' 
-}
-
-# }}}
-read_slapd_conf() {							# {{{
-# read slapd.conf file and evaluate include statements
-# FIXME: circular loops will cause this to block forever
-	merge_logical_lines | while read command data; do
-		if [ "$command" = "include" ]; then
-			file=`eval echo $data`
-			read_slapd_conf < $file
-		else
-			echo $command $data
-		fi
-	done
-}
-
-# }}}
-write_slapd_conf() {            # {{{
-# Change a configuration setting in a configuration file, follow includes.
-# Usage: write_slapd_conf configuration_file regexpression
-# FIXME: circular loops will cause this to block forever
-
-	conf=$1
-	reg=$2
-
-	# Perl script to change configuration files.
-	script='
-		use File::Temp;
-		use File::Compare;
-		use File::Copy;
-
-		sub changeConfig {
-			my ($conf, $regexp) = @_;
-			my ($fh, $name) = mkstemp("/tmp/tmp.XXXXXX");
-
-			open(HANDLE, "<". $conf) || return;
-			my @data = <HANDLE>;
-			close(HANDLE);
-
-			foreach $line (@data) {
-
-				# Parse includes, but forget the schema files.
-				if ($line =~ /^include/ && $line !~ /\/etc\/ldap\/schema\//) {
-					my @file = split(/\s+/, $line);
-					changeConfig($file[1], $regexp);
-				}
-
-				# Modify the config with the given regexpression.
-				$doit = "\$line =~ $regexp";
-				eval $doit;
-				print $fh $line;
-			}
-
-			# Close the tempfile handle opened by mkstemp.
-			close($fh);
-
-			# If file is changed by the regexp replace the original file.
-			if (compare($conf, $name) != 0) {
-				move($name, $conf);
-			} else {
-				unlink($name);
-			}
-		}
-
-		$config = shift;
-		$regexp = shift;
-		changeConfig($config, $regexp);'
-
-	# Use perl to execute the function above.
-	perl -e "$script" "$conf" "$reg"
-}
-# }}}
 # The following two functions need to support slapd.conf installations 
 # as long as upgrading from slapd.conf environment is supported.
 # They're used to dump database in preinst which may have a slapd.conf file.
 get_suffix() {								# {{{
 	if [ -f "${SLAPD_CONF}" ]; then
 		for f in `get_all_slapd_conf_files`; do
-			sed -n -e's/^suffix[[:space:]]\+"*\([^"]\+\)"*/\1/p' $f
+			sed -n -e '/^suffix[[:space:]]/ { s/^suffix[[:space:]]\+"*\([^"]\+\)"*/\1/; s/\\\\/\\/g; p }' $f
 		done
 	else
 		grep -h ^olcSuffix ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif | cut -d: -f 2
@@ -386,14 +296,16 @@ get_suffix() {								# {{{
 # }}}
 get_directory() {							# {{{
 # Returns the db directory for a given suffix
-	if [ -d "${SLAPD_CONF}" ] && get_suffix | grep -q "$1" ; then
-		sed -n 's/^olcDbDirectory: *//p' `grep -l "^olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif`
+	if [ -d "${SLAPD_CONF}" ] && get_suffix | grep -Fq "$1" ; then
+		sed -n 's/^olcDbDirectory: *//p' `grep -Flx "olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif`
 	elif [ -f "${SLAPD_CONF}" ]; then
 		# Extract the directory for the given suffix ($1)
+		# Quote backslashes once for slapd.conf parser, again for awk
+		quoted="$(printf '%s' "$1" | sed 's/\\/\\\\\\\\/g')"
 		for f in `get_all_slapd_conf_files`; do
 		awk  ' BEGIN { DB=0; SUF=""; DIR="" } ;
 		       /^database/ { DB=1; SUF=""; DIR="" } ; 
-		       DB==1 && /^suffix[ \t]+"?'"$1"'"?$/ { SUF=$2 ; } ; 
+		       DB==1 && /^suffix[ \t]+"?'"$quoted"'"?$/ { SUF=$2 ; } ; 
 		       DB==1 && /^directory/ { DIR=$2 ;} ; 
 		       DB==1 && SUF!="" && DIR!="" { sub(/^"/,"",DIR) ; sub(/"$/,"",DIR) ; print DIR; SUF=""; DIR="" }' "${f}" | \
 		sed -e's/\([^\\]\|^\)"/\1/g; s/\\"/"/g; s/\\\\/\\/g'
@@ -459,7 +371,7 @@ compute_backup_path() {							# {{{
 		exit 1
 	fi
 
-	echo "$target"
+	printf '%s' "$target"
 }
 
 # }}}
@@ -487,8 +399,8 @@ move_old_database_away() {						# {{{
 	# include mount points as well anyway, but it's much less likely.
 	db_get slapd/move_old_database
 	if [ "$RET" = true ]; then
-		backupdir=`compute_backup_path "$databasedir" "$suffix"`
-		echo -n "  - directory $suffix... " >&2
+		backupdir="$(compute_backup_path "$databasedir" "$suffix")"
+		printf '  - directory %s... ' "$suffix" >&2
 		mkdir -p "$backupdir"
 		find -H "$databasedir" -mindepth 1 -maxdepth 1 -type f \
 			-exec mv {} "$backupdir" \;
@@ -542,6 +454,7 @@ create_new_configuration() {						# {{{
 	db_get slapd/backend
 	backend="`echo $RET|tr A-Z a-z`"
 
+	backup_config_once
 	if [ -e "/var/lib/ldap" ] && ! is_empty_dir /var/lib/ldap; then
 		echo >&2 "  Moving old database directory to /var/backups:"
 		move_old_database_away /var/lib/ldap
@@ -675,9 +588,11 @@ backup_config_once() {							# {{{
 	local backupdir
 
 	if [ -z "$FLAG_CONFIG_BACKED_UP" ]; then
-		backupdir=`database_dumping_destdir`
 		if [ -e "$SLAPD_CONF" ]; then
+			backupdir=`database_dumping_destdir`
+			echo -n "  Backing up $SLAPD_CONF in ${backupdir}... " >&2
 			cp -a "$SLAPD_CONF" "$backupdir"
+			echo done. >&2
 		fi
 		FLAG_CONFIG_BACKED_UP=yes
 	fi

@@ -11,20 +11,20 @@
 #    Developers do not need to manually edit POT or PO files.
 #
 # Yuri Kozlov <kozlov.y@gmail.com>, 2007, 2008.
-# Yuri Kozlov <yuray@komyakino.ru>, 2010, 2014.
+# Yuri Kozlov <yuray@komyakino.ru>, 2010, 2014, 2017.
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.4.40-2\n"
+"Project-Id-Version: openldap 2.4.44+dfsg-4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2016-11-23 05:25+0000\n"
-"PO-Revision-Date: 2014-10-26 08:52+0300\n"
+"POT-Creation-Date: 2017-06-25 02:57+0000\n"
+"PO-Revision-Date: 2017-01-10 19:00+0300\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Lokalize 2.0\n"
 "Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
@@ -372,95 +372,71 @@ msgstr "Смотрите подробности в файле /usr/share/doc/sla
 #. Choices
 #: ../slapd.templates:17001
 msgid "abort installation"
-msgstr ""
+msgstr "прервать установку"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:17001
 msgid "continue regardless"
-msgstr ""
+msgstr "продолжить"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid "Manual ppolicy schema update recommended"
-msgstr ""
+msgstr "Рекомендуется обновление схемы ppolicy вручную"
 
 #. Type: select
 #. Description
-#. "ppolicy", "pwdMaxRecordedFailure", and "cn=config" are not translatable.
+#. "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
 #: ../slapd.templates:17002
 msgid ""
-"In the version of slapd about to be installed, the ppolicy overlay requires "
-"the new pwdMaxRecordedFailure attribute to be defined in the ppolicy schema. "
-"The schema contained in the cn=config database does not currently include "
-"this attribute."
+"The new version of the Password Policy (ppolicy) overlay requires the schema "
+"to define the pwdMaxRecordedFailure attribute type, which is not present in "
+"the schema currently in use. It is recommended to abort the upgrade now, and "
+"to update the ppolicy schema before upgrading slapd. If replication is in "
+"use, the schema update should be applied on every server before continuing "
+"with the upgrade."
 msgstr ""
+"Для новой версии оверлея Password Policy (ppolicy) требуется определение "
+"типа атрибутов pwdMaxRecordedFailure, который отсутствует в используемой в "
+"данной момент схеме. Рекомендуется прервать установку прямо сейчас и "
+"обновить схему ppolicy перед обновлением slapd. Если используется "
+"репликация, то обновление схемы должно быть выполнено на каждом сервере "
+"перед продолжением обновления."
+
+#. Type: select
+#. Description
+#. This paragraph is followed by the path to the generated file (not
+#. translatable). The sentence continues in the following paragraph.
+#: ../slapd.templates:17002
+msgid ""
+"An LDIF file has been generated with the changes required for the upgrade:"
+msgstr "Был создан файл LDIF с изменениями, требующимися для обновления:"
+
+#. Type: select
+#. Description
+#. This paragraph continues the sentence started in the previous
+#. paragraph. It is followed by a command line.
+#: ../slapd.templates:17002
+msgid ""
+"so if slapd is using the default access control rules, these changes can be "
+"applied (after starting slapd) by using the command:"
+msgstr ""
+"и если в slapd используются правила управления доступом по умолчанию, то эти "
+"изменения можно применить (после запуска slapd) командой:"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid ""
-"You may choose to continue the installation. In this case, the maintainer "
-"scripts will add the new attribute automatically during the upgrade. "
-"However, the change will not be acted on by slapd overlays, and replication "
-"with other servers may be affected."
+"If instead you choose to continue the installation, the new attribute type "
+"will be added automatically, but the change will not be acted on by slapd "
+"overlays, and replication with other servers may be affected."
 msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"The ppolicy schema can be updated by applying the changes found in the "
-"following LDIF file:"
-msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"If slapd is using the default access control rules, after starting slapd, "
-"the changes can be applied using the following command:"
-msgstr ""
-
-#. Type: select
-#. Description
-#: ../slapd.templates:17002
-msgid ""
-"It is recommended to abort the upgrade now and to update the ppolicy schema "
-"before upgrading slapd. If replication is in use, the schema update should "
-"be applied on every server before continuing with the upgrade."
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid "Kerberos support disabled for smbk5pwd overlay"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"The smbk5pwd overlay is no longer built with Kerberos support. The "
-"\"smbk5pwd-enable krb5\" setting has been automatically disabled in the "
-"slapd configuration file."
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid "Disable Kerberos in smbk5pwd before upgrading slapd"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"The smbk5pwd overlay is no longer built with Kerberos support. The "
-"\"olcSmbK5PwdEnable: krb5\" setting must be removed from any instances of "
-"the smbk5pwd overlay before upgrading slapd."
-msgstr ""
+"Если вы выберете продолжение установки, то новый тип атрибута будет добавлен "
+"автоматически, но изменение не будет применено в оверлеях slapd, и это может "
+"повлиять на другие серверы при репликации."
 
 #~ msgid "Allow LDAPv2 protocol?"
 #~ msgstr "Включить протокол LDAPv2?"

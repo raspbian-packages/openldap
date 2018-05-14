@@ -1,7 +1,7 @@
 # $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2016 The OpenLDAP Foundation.
+# Copyright 1998-2018 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,17 +21,18 @@ LDAP_LIB = $(LDAP_BUILD)/debian/build/libraries/libldap_r/libldap_r.la \
 SSL_INC = 
 SSL_LIB = -lnettle
 
-HEIMDAL_INC = -I/usr/heimdal/include
-HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
+HEIMDAL_INC = $(shell krb5-config.heimdal --cflags kadm-server)
+HEIMDAL_LIB = $(shell krb5-config.heimdal --libs kadm-server)
 
 LIBTOOL = $(LDAP_BUILD)/debian/build/libtool
 INSTALL = /usr/bin/install
 CC = gcc
 OPT = -g -O2 -Wall
 # Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
-DEFS = -DDO_SAMBA -DDO_SHADOW
-INCS = $(LDAP_INC) $(SSL_INC)
-LIBS = $(LDAP_LIB) $(SSL_LIB)
+DEFS = -DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
+INCS = $(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
+# put /usr/lib/heimdal before /usr/lib in case libkrb5-dev is installed, #745356
+LIBS = $(HEIMDAL_LIB) $(LDAP_LIB) $(SSL_LIB)
 
 PROGRAMS = smbk5pwd.la
 MANPAGES = slapo-smbk5pwd.5

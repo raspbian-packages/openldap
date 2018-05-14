@@ -1,9 +1,187 @@
-openldap (2.4.44+dfsg-2+rpi1) stretch-staging; urgency=medium
+openldap (2.4.46+dfsg-5+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.4.42+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 31 Aug 2015 16:17:47 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 08 Dec 2016 14:47:46 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Mon, 14 May 2018 23:36:11 +0000
+
+openldap (2.4.46+dfsg-5) unstable; urgency=medium
+
+  * Restore slapd-smbk5pwd now that libldap is installable in unstable.
+    This reverts the changes from -3 and -4.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 04 May 2018 16:12:27 -0700
+
+openldap (2.4.46+dfsg-4) unstable; urgency=medium
+
+  * Disable building the smbk5pwd plugin temporarily.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 04 May 2018 08:06:58 -0700
+
+openldap (2.4.46+dfsg-3) unstable; urgency=medium
+
+  * Build without heimdal temporarily to resolve BD-Uninstallable loop.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 04 May 2018 07:36:58 -0700
+
+openldap (2.4.46+dfsg-2) unstable; urgency=medium
+
+  * Remove version constraint from libldap-2.4-2 dependency on libldap-common.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 03 May 2018 14:16:49 -0700
+
+openldap (2.4.46+dfsg-1) unstable; urgency=medium
+
+  * Move the repository to Salsa.
+    Update debian/control Vcs-* fields.
+  * Remove Matthijs Möhlmann from Uploaders. (Closes: #891308)
+    Thank you Matthijs for your past contributions.
+  * New upstream release.
+    - fixed slapd out-of-sync issue with delta-MMR and memberof overlay
+      (ITS#8444) (Closes: #877166)
+  * Rebase patch no-AM_INIT_AUTOMAKE to apply cleanly.
+  * Drop patch ITS8650-retry-gnutls_handshake-after-GNUTLS_E_AGAIN, applied
+    upstream.
+  * Really fix upgrades when the config contains backslash-escaped special
+    characters. The previous fix was incomplete and didn't fully fix upgrades
+    involving a database reload. (Closes: #864719)
+  * Update Standards-Version to 4.1.4.
+    - Change the Priority of libldap-2.4-2 and libldap-common to optional.
+  * Change download URL in debian/watch to https. Fixes a Lintian info.
+  * Override the binary-or-shlib-defines-rpath Lintian tag for slapd-smbk5pwd.
+    The rpath is set by krb5-config.heimdal; see bug #868840.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 03 May 2018 07:03:30 -0700
+
+openldap (2.4.45+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+    - fixed a use-after-free in GnuTLS options handling
+      (ITS#8385) (Closes: #820244) (LP: #1557248)
+    - fixed unsafe concurrent SASL calls causing memory corruption
+      (ITS#8648) (Closes: #860947) (LP: #1688575)
+    - fixed syncrepl infinite looping with multi-master delta-syncrepl
+      (ITS#8432) (Closes: #868753)
+  * Rebase patches to apply cleanly:
+    - do-not-second-guess-sonames
+    - no-AM_INIT_AUTOMAKE
+  * Drop patches applied upstream:
+    - ITS-8554-kFreeBSD-is-like-BSD.patch
+    - ITS-8644-wait-for-slapd-to-start-in-test064.patch
+    - ITS-8655-paged-results-double-free.patch
+  * Upgrade to debhelper compat level 10.
+    - Depend on debhelper 10.
+    - Stop enabling parallel and autoreconf explicitly. They are now enabled 
+      by default.
+    - Drop dh-autoreconf from build-depends since debhelper requires it.
+  * Add -Wno-format-extra-args to CFLAGS to reduce the noise in the build 
+    logs, as this warning is emitted on each use of the Debug() macro.
+  * Drop libldap-2.4-4-dbg and slapd-dbg binary packages in favour of 
+    automatic dbgsym packages.
+  * Update Standards-Version to 4.0.0; no changes required.
+  * Drop Priority and Section from binary package stanzas when they only 
+    duplicate information from the source stanza.
+  * Update Priority of slapd-smbk5pwd and libldap2-dev to optional to match 
+    the archive.
+  * Remove retired developer, Roland Bauerschmidt, from Uploaders.
+    (Closes: #856422)
+  * Remove Timo Aaltonen from Uploaders, with his agreement.
+  * debian/patches/ITS8650-retry-gnutls_handshake-after-GNUTLS_E_AGAIN.patch: 
+    If gnutls_handshake() returns EAGAIN, call it again. Fixes TLS handshake 
+    failures when the ServerHello message exceeds 16K.
+    (ITS#8650) (Closes: #861838)
+  * Drop time from Build-Depends. The upstream testsuite no longer calls it.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 27 Jul 2017 18:04:41 -0700
+
+openldap (2.4.44+dfsg-8) unstable; urgency=medium
+
+  * Disable test060-mt-hot on ppc64el temporarily to avoid failing tests until 
+    the underlying kernel bug #866122 is fixed.
+  * Fix FTBFS with Heimdal 7.2.0: Drop patch heimdal-fix as the 
+    hdb_generate_key_set_password change was reverted in heimdal. Depend on an 
+    appropriate minimum version of heimdal.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 16 Jul 2017 12:57:41 -0700
+
+openldap (2.4.44+dfsg-7) unstable; urgency=medium
+
+  * Relax the dependency of libldap-2.4-2 on libldap-common to also permit 
+    later versions. (Closes: #860774)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 27 Jun 2017 18:53:12 -0700
+
+openldap (2.4.44+dfsg-6) unstable; urgency=medium
+
+  * Update the list of non-translatable strings for the 
+    slapd/ppolicy_schema_needs_update template. Thanks Ferenc Wágner.
+  * Fix upgrade failure when olcSuffix contains a backslash. (Closes: #864719)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 26 Jun 2017 19:42:02 -0700
+
+openldap (2.4.44+dfsg-5) unstable; urgency=medium
+
+  * debian/patches/ITS-8644-wait-for-slapd-to-start-in-test064.patch: Fix an 
+    intermittently failing test by waiting for slapd to start before running 
+    tests. (ITS#8644) (Closes: #770890)
+  * debian/patches/ITS-8655-paged-results-double-free.patch: Fix a double free 
+    in the MDB backend on a search including the Paged Results control with a 
+    page size of 0. (ITS#8655) (CVE-2017-9287) (Closes: #863563)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 28 May 2017 09:59:46 -0700
+
+openldap (2.4.44+dfsg-4) unstable; urgency=medium
+
+  * Improve the slapd/ppolicy_schema_needs_update debconf template. Thanks to 
+    Justin B Rye for the review.
+  * Update Catalan debconf translation. (Closes: #851905)
+    Thanks to Innocent De Marchi.
+  * Update Czech debconf translation. (Closes: #852190)
+    Thanks to Miroslav Kure.
+  * Update Danish debconf translation. (Closes: #850859)
+    Thanks to Joe Dalton.
+  * Update German debconf translation. (Closes: #851480)
+    Thanks to Helge Kreutzmann.
+  * Update Basque debconf translation. (Closes: #850812)
+    Thanks to Iñaki Larrañaga Murgoitio.
+  * Update French debconf translation. (Closes: #852459)
+    Thanks to Jean-Pierre Giraud.
+  * Update Italian debconf translation. (Closes: #852074)
+    Thanks to Luca Monducci.
+  * Update Japanese debconf translation. (Closes: #851457)
+    Thanks to Kenshi Muto.
+  * Update Dutch debconf translation. (Closes: #852405)
+    Thanks to Frans Spiesschaert.
+  * Update Brazilian Portuguese debconf translation. (Closes: #852443)
+    Thanks to Adriano Rafael Gomes.
+  * Update Russian debconf translation. (Closes: #850833)
+    Thanks to Yuri Kozlov.
+  * Update Slovak debconf translation. (Closes: #850796)
+    Thanks to Ivan Masár.
+  * Update Swedish debconf translation. (Closes: #851168)
+    Thanks to Martin Bagge.
+  * Update Turkish debconf translation. (Closes: #851470)
+    Thanks to Atila KOÇ.
+  * Update Vietnamese debconf translation.
+    Thanks to Trần Ngọc Quân.
+  * Update Build-Depends on debhelper to ensure shlibs files are installed at 
+    the expected time during build. (Closes: #854158)
+  * Update Portuguese debconf translation. (Closes: #859943)
+    Thanks to Rui Branco and DebianPT.
+  * Dump the configuration and databases to LDIF before removing slapd, so 
+    that they are available if a newer version requiring migration is 
+    installed later. (Closes: #665199)
+  * When creating a new configuration with dpkg-reconfigure, back up the old 
+    configuration before overwriting it.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 16 Apr 2017 20:10:43 -0700
+
+openldap (2.4.44+dfsg-3) unstable; urgency=medium
+
+  * Apply upstream patch to fix FTBFS on kFreeBSD. (Closes: #845394)
+  * Restore heimdal support to the smbk5pwd overlay.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 01 Jan 2017 19:47:36 -0800
 
 openldap (2.4.44+dfsg-2) unstable; urgency=medium
 

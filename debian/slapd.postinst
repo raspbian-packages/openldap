@@ -8,33 +8,12 @@ set -e
 # various helper functions and $OLD_VERSION and $SLAPD_CONF
 #SCRIPTSCOMMON#
 
-disable_smbk5pwd_krb5() {						# {{{
-# Disable smbk5pwd's Kerberos support in slapd.conf
-	if ! read_slapd_conf < "$SLAPD_CONF" | grep -q '^smbk5pwd-enable\s\+krb5'; then
-		return 0
-	fi
-
-	write_slapd_conf "$SLAPD_CONF" 's/^(smbk5pwd-enable\s+krb5)/#$1/i'
-	update_slapd_conf_permissions
-
-	db_input critical slapd/smbk5pwd_krb5_disabled || true
-	db_go
-}
-# }}}
-
 postinst_upgrade_cn_config() {						# {{{
 	if previous_version_older '2.4.44+dfsg-1~'; then
 		upgrade_cnconfig_ppolicy_schema
 	fi
 }
 # }}}
-postinst_upgrade_slapd_conf() {						# {{{
-	if previous_version_older '2.4.44+dfsg-1~'; then
-		disable_smbk5pwd_krb5
-	fi
-}
-# }}}
-
 postinst_initial_configuration() {					# {{{
 # Configure slapd for the first time (when first installed)
 # Usage: postinst_initial_configuration
@@ -53,15 +32,11 @@ postinst_upgrade_configuration() {					# {{{
 # Usage: postinst_upgrade_configuration
 
 	# Better back up the config file in any case
-	echo -n "  Backing up $SLAPD_CONF in `database_dumping_destdir`... " >&2
 	backup_config_once
-	echo done. >&2
 
 	# Complete any config updates before trying to use slapadd
 	if [ -d "$SLAPD_CONF" ]; then
 		postinst_upgrade_cn_config
-	else
-		postinst_upgrade_slapd_conf
 	fi
 
 	# Check if the database format has changed.

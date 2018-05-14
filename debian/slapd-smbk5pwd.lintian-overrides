@@ -1,5 +1,4 @@
-# The call to adduser is in a functions library inlined at build time.
-# adduser is not actually called from this script.
-slapd-smbk5pwd: maintainer-script-needs-depends-on-adduser preinst
 # #204975
 slapd-smbk5pwd: package-has-unnecessary-activation-of-ldconfig-trigger
+# rpath set by krb5-config.heimdal; #868840
+binary-or-shlib-defines-rpath usr/lib/ldap/smbk5pwd.so.0.0.0 /usr/lib/x86_64-linux-gnu/heimdal
