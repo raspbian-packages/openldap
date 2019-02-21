@@ -77,6 +77,18 @@ preinst_check_config() {						# {{{
 		return 0
 	fi
 
+	if ! [ -d "$SLAPD_CONF" ]; then
+		# no checks needed for slapd.conf at this time
+		return 0
+	fi
+
+	# If slapd was previously removed and a newer version is being
+	# installed, the config must have already been dumped during
+	# remove, or we cannot proceed.
+	if [ "$MODE" = upgrade ]; then
+		dump_config
+	fi
+
 	# Locate the file exported by dump_config.
 	local dumped_ldif="$(database_dumping_destdir)/cn=config.ldif"
 	if [ ! -f "$dumped_ldif" ]; then
@@ -99,15 +111,8 @@ preinst_check_config() {						# {{{
 # available at this time, so the data should have been dumped before the
 # old slapd was removed.
 
-if [ "$MODE" = upgrade ]; then
-	dump_config
-fi
-
 if [ "$MODE" = upgrade ] || [ "$MODE" = install -a -n "$OLD_VERSION" ]; then
-	# Do not assume slapcat is available in this phase
-	if [ -d "$SLAPD_CONF" ]; then
-		preinst_check_config
-	fi
+	preinst_check_config
 fi
 
 if [ "$MODE" = upgrade ]; then

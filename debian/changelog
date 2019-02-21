@@ -1,9 +1,61 @@
-openldap (2.4.46+dfsg-5+rpi1) buster-staging; urgency=medium
+openldap (2.4.47+dfsg-3+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.4.42+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 31 Aug 2015 16:17:47 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Mon, 14 May 2018 23:36:11 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 21 Feb 2019 17:10:11 +0000
+
+openldap (2.4.47+dfsg-3) unstable; urgency=medium
+
+  * Restore patches to contrib Makefiles to set CFLAGS, CPPFLAGS, and LDFLAGS
+    individually in the relevant command lines instead of overriding OPT. The
+    change to use OPT caused FTBFS on some ports arches where PIE enablement
+    uses spec files, by mixing compile-time and link-time flags.
+    (Closes: #919136)
+  * Fix architecture-specific path in smbk5pwd's binary-or-shlib-defines-rpath
+    Lintian override.
+  * Skip exporting cn=config to LDIF in preinst for upgrades where nothing
+    needs to be checked in it.
+  * Update Standards-Version to 4.3.0.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 02 Feb 2019 10:30:10 -0800
+
+openldap (2.4.47+dfsg-2) unstable; urgency=medium
+
+  * Reintroduce slapi-dev binary package. (Closes: #711469)
+    Thanks to Florian Schlichting.
+  * Do not call gnutls_global_set_mutex(). (Closes: #803197)
+  * Use dh_auto_* to build and install contrib modules.
+    - Stop patching the clean rule in smbk5pwd's Makefile.
+  * Explicitly list overlays and man pages installed by slapd package in
+    slapd.install and slapd.manpages files.
+  * Set common variables for contrib Makefiles by make(1) command line instead
+    of patching every Makefile.
+  * Build and install more contrib plugins in a new slapd-contrib package:
+    - pw-apr1 and pw-netscape (Closes: #592362)
+    - pw-pbkdf2 (Closes: #794999)
+  * Import the slapo-pw-pbkdf2 man page from upstream git master and install
+    it with the slapd-contrib package.
+  * Add smbk5pwd to slapd-contrib and turn slapd-smbk5pwd into a transitional
+    package. Drop smbk5pwd README since it now has a man page which is a
+    better resource for users.
+    - Use Breaks to ensure that slapd is not upgraded in between removing the
+      old smbk5pwd module and installing the new one.
+  * Include the apr1-atol.pl and apr1-lota.pl helper scripts in the
+    slapd-contrib package as examples.
+  * Merge remaining contrib Makefile patches into a single contrib-makefiles
+    patch.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 12 Jan 2019 11:18:03 -0800
+
+openldap (2.4.47+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+    - reverted GnuTLS handshake change in libldap as it regressed slapd
+      (Reopens: #861838)
+  * Update Standards-Version to 4.2.1.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 Dec 2018 12:50:40 -0800
 
 openldap (2.4.46+dfsg-5) unstable; urgency=medium
 

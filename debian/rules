@@ -23,6 +23,8 @@ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	CONFIG += --disable-slapd
 endif
 
+CONTRIB_MODULES = autogroup lastbind passwd passwd/pbkdf2 passwd/sha2 smbk5pwd
+
 # Ensure CC is set correctly for cross builds, unless it has already 
 # been set explicitly.
 ifeq ($(origin CC),default)
@@ -34,6 +36,14 @@ builddir	:= $(CURDIR)/debian/build
 slapddir	:= $(CURDIR)/debian/slapd/usr/sbin
 
 MAKEVARS	:= STRIP=
+
+# Standard variables used in contrib Makefiles.
+# We override these in make invocations rather than patch every one.
+CONTRIB_MAKEVARS := \
+	LDAP_BUILD='$(builddir)' \
+	prefix=/usr \
+	ldap_subdir=/ldap \
+	moduledir='$$(libdir)$$(ldap_subdir)'
 
 # These variables are used only by get-orig-source, which will normally only
 # be run by maintainers.
@@ -103,10 +113,9 @@ override_dh_auto_configure:
 override_dh_auto_build:
 	dh_auto_build -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	$(MAKE) -C contrib/slapd-modules/smbk5pwd CC=$(CC)
-	$(MAKE) -C contrib/slapd-modules/autogroup CC=$(CC)
-	$(MAKE) -C contrib/slapd-modules/lastbind CC=$(CC)
-	$(MAKE) -C contrib/slapd-modules/passwd/sha2 CC=$(CC)
+	for mod in $(CONTRIB_MODULES); do \
+		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
+	done
 endif
 
 override_dh_auto_test:
@@ -119,10 +128,9 @@ endif
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
-	$(MAKE) -C contrib/slapd-modules/autogroup install DESTDIR=$(installdir)
-	$(MAKE) -C contrib/slapd-modules/lastbind install DESTDIR=$(installdir)
-	$(MAKE) -C contrib/slapd-modules/passwd/sha2 install DESTDIR=$(installdir)
+	for mod in $(CONTRIB_MODULES); do \
+		dh_auto_install -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
+	done
 
 	# Empty the dependency_libs file in the .la files.
 	for F in $(installdir)/usr/lib/ldap/*.la; do \
@@ -148,12 +156,6 @@ endif
 	# Upstream manpages are section 8C but installed as section 8
 	find $(installdir)/usr/share/man -name \*.8 \
 		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'
-
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-override_dh_install-arch:
-	dh_install
-	rm -rf $(CURDIR)/debian/slapd/usr/lib/ldap/smbk5pwd*
-endif
 
 override_dh_installinit:
 	dh_installinit -- "defaults 19 80"
@@ -218,24 +220,9 @@ ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	fi
 
 	# Clean the contrib directory
-	rm -rf contrib/slapd-modules/smbk5pwd/.libs \
-		contrib/slapd-modules/smbk5pwd/smbk5pwd.lo \
-		contrib/slapd-modules/smbk5pwd/smbk5pwd.la \
-		contrib/slapd-modules/smbk5pwd/smbk5pwd.o
-	rm -rf contrib/slapd-modules/autogroup/.libs \
-		contrib/slapd-modules/autogroup/autogroup.lo \
-		contrib/slapd-modules/autogroup/autogroup.la \
-		contrib/slapd-modules/autogroup/autogroup.o
-	rm -rf contrib/slapd-modules/lastbind/.libs \
-		contrib/slapd-modules/lastbind/lastbind.lo \
-		contrib/slapd-modules/lastbind/lastbind.la \
-		contrib/slapd-modules/lastbind/lastbind.o
-	rm -rf contrib/slapd-modules/passwd/sha2/.libs \
-		contrib/slapd-modules/passwd/sha2/pw-sha2.la \
-		contrib/slapd-modules/passwd/sha2/sha2.lo \
-		contrib/slapd-modules/passwd/sha2/sha2.o \
-		contrib/slapd-modules/passwd/sha2/slapd-sha2.lo \
-		contrib/slapd-modules/passwd/sha2/slapd-sha2.o
+	for mod in $(CONTRIB_MODULES); do \
+		dh_auto_clean -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod || exit $?; \
+	done
 endif
 
 override_dh_auto_test:

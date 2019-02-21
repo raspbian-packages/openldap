@@ -20,7 +20,7 @@ Build-Depends: debhelper (>= 10),
                po-debconf,
                unixodbc-dev <!stage1>
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev, autoconf2.13
-Standards-Version: 4.1.4
+Standards-Version: 4.3.0
 Homepage: http://www.openldap.org/
 Vcs-Git: https://salsa.debian.org/openldap-team/openldap.git
 Vcs-Browser: https://salsa.debian.org/openldap-team/openldap
@@ -43,15 +43,27 @@ Description: OpenLDAP server (slapd)
  (slapd). The server can be used to provide a standalone directory
  service.
 
-Package: slapd-smbk5pwd
+Package: slapd-contrib
 Architecture: any
 Build-Profiles: <!stage1>
 Depends: slapd (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
-Description: Keeps Samba and Kerberos passwords in sync within slapd.
- Extends the PasswordModify Extended Operation to update Kerberos keys
- and Samba password hashes for an LDAP user. The Kerberos support is
- written for Heimdal using its hdb-ldap backend. The Samba support is
- written using the Samba 3.0 LDAP schema.
+Provides: slapd-smbk5pwd
+Breaks: slapd-smbk5pwd (<< 2.4.47+dfsg-2~)
+Replaces: slapd-smbk5pwd (<< 2.4.47+dfsg-2~)
+Description: contributed plugins for OpenLDAP slapd
+ This package contains a number of slapd overlays and plugins contributed by
+ the OpenLDAP community. While distributed as part of OpenLDAP Software, they
+ are not necessarily supported by the OpenLDAP Project.
+
+Package: slapd-smbk5pwd
+Architecture: all
+Section: oldlibs
+Build-Profiles: <!stage1>
+Depends: slapd-contrib, ${misc:Depends}
+Breaks: slapd (<< 2.4.47+dfsg-2~)
+Description: transitional package for slapd-contrib
+ This is a transitional package from slapd-smbk5pwd to slapd-contrib. It can be
+ safely removed.
 
 Package: ldap-utils
 Architecture: any
@@ -101,3 +113,13 @@ Description: OpenLDAP development libraries
  This package allows development of LDAP applications using the OpenLDAP
  libraries. It includes headers, libraries and links to allow static and
  dynamic linking.
+
+Package: slapi-dev
+Section: libdevel
+Architecture: any
+Build-Profiles: <!stage1>
+Depends: slapd (= ${binary:Version}), ${misc:Depends}
+Description: development libraries for OpenLDAP SLAPI plugin interface
+ This package allows development of plugins for the OpenLDAP slapd server
+ using the SLAPI interface.  It includes the headers and libraries needed
+ to build such plugins.
