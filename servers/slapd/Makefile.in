@@ -445,9 +445,9 @@ install-conf: FORCE
 
 install-db-config: FORCE
 	@-$(MKDIR) $(DESTDIR)$(localstatedir) $(DESTDIR)$(sysconfdir)
-	@-$(INSTALL) -m 700 -d $(DESTDIR)$(localstatedir)/openldap-data
+	@-$(INSTALL) -m 700 -d $(DESTDIR)$(localstatedir)/lib/ldap
 	$(INSTALL) $(INSTALLFLAGS) -m 600 $(srcdir)/DB_CONFIG \
-		$(DESTDIR)$(localstatedir)/openldap-data/DB_CONFIG.example
+		$(DESTDIR)$(localstatedir)/lib/ldap/DB_CONFIG.example
 	$(INSTALL) $(INSTALLFLAGS) -m 600 $(srcdir)/DB_CONFIG \
 		$(DESTDIR)$(sysconfdir)/DB_CONFIG.example
 
