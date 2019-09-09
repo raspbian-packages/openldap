@@ -1,9 +1,20 @@
-openldap (2.4.47+dfsg-3+rpi1) buster-staging; urgency=medium
+openldap (2.4.47+dfsg-3+rpi1+deb10u1) buster-staging; urgency=medium
 
   [changes brought forward from 2.4.42+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 31 Aug 2015 16:17:47 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 21 Feb 2019 17:10:11 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Mon, 09 Sep 2019 13:45:58 +0000
+
+openldap (2.4.47+dfsg-3+deb10u1) buster; urgency=medium
+
+  * Fix slapd to restrict rootDN proxyauthz to its own databases
+    (CVE-2019-13057) (ITS#9038) (Closes: #932997)
+  * Fix slapd to enforce sasl_ssf ACL statement on every connection
+    (CVE-2019-13565) (ITS#9052) (Closes: #932998)
+  * Fix slapo-rwm to not free original filter when rewritten filter is invalid
+    (ITS#8964) (Closes: #934277, LP: #1838370)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 10 Aug 2019 11:58:18 -0700
 
 openldap (2.4.47+dfsg-3) unstable; urgency=medium
 
