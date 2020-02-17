@@ -5,7 +5,7 @@
 .SH NAME
 slapd \- Stand-alone LDAP Daemon
 .SH SYNOPSIS
-.B LIBEXECDIR/slapd 
+.B /usr/sbin/slapd 
 [\c
 .BR \-4 | \-6 ]
 [\c
@@ -103,11 +103,10 @@ If this option is specified, even with a zero argument,
 will not fork or disassociate from the invoking terminal.  Some general
 operation and status messages are printed for any value of \fIdebug-level\fP.
 \fIdebug-level\fP is taken as a bit string, with each bit corresponding to a
-different kind of debugging information.  See <ldap_log.h> for details.
-Comma-separated arrays of friendly names can be specified to select
-debugging output of the corresponding debugging information.
-All the names recognized by the \fIloglevel\fP directive 
-described in \fBslapd.conf\fP(5) are supported.
+different kind of debugging information.  Comma-separated arrays of friendly
+names can be specified to select debugging output of the corresponding
+debugging information.  All the names recognized by the \fIloglevel\fP
+directive described in \fBslapd.conf\fP(5) are supported.
 If \fIdebug-level\fP is \fB?\fP, a list of installed debug-levels is printed,
 and slapd exits.
 
@@ -317,7 +316,7 @@ the LDAP databases defined in the default config file, just type:
 .LP
 .nf
 .ft tt
-	LIBEXECDIR/slapd
+	/usr/sbin/slapd
 .ft
 .fi
 .LP
@@ -328,7 +327,7 @@ on voluminous debugging which will be printed on standard error, type:
 .LP
 .nf
 .ft tt
-	LIBEXECDIR/slapd \-f /var/tmp/slapd.conf \-d 255
+	/usr/sbin/slapd \-f /var/tmp/slapd.conf \-d 255
 .ft
 .fi
 .LP
@@ -336,7 +335,7 @@ To test whether the configuration file is correct or not, type:
 .LP
 .nf
 .ft tt
-	LIBEXECDIR/slapd \-Tt
+	/usr/sbin/slapd \-Tt
 .ft
 .fi
 .LP
