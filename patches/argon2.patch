@@ -1,0 +1,396 @@
+Description: Import Argon2 password module from upstream git
+ The files are updated to upstream commit af5ed7c6e2.
+Origin: upstream, https://git.openldap.org/openldap/openldap/-/tree/OPENLDAP_REL_ENG_2_5/contrib/slapd-modules/passwd/argon2
+Bug-Debian: https://bugs.debian.org/920283
+Last-Update: 2020-04-04
+--- /dev/null
++++ b/contrib/slapd-modules/passwd/argon2/Makefile
+@@ -0,0 +1,60 @@
++# $OpenLDAP$
++
++LDAP_SRC = ../../../..
++LDAP_BUILD = ../../../..
++LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
++LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
++	$(LDAP_BUILD)/libraries/liblber/liblber.la
++
++LIBTOOL = $(LDAP_BUILD)/libtool
++CC = gcc
++OPT = -g -O2 -Wall
++#DEFS = -DSLAPD_ARGON2_DEBUG
++
++INCS = $(LDAP_INC)
++LIBS = $(LDAP_LIB)
++
++implementation = sodium
++
++ifeq ($(implementation),argon2)
++LIBS += -largon2
++DEFS += -DSLAPD_ARGON2_USE_ARGON2
++else ifeq ($(implementation),sodium)
++LIBS += -lsodium
++DEFS += -DSLAPD_ARGON2_USE_SODIUM
++else
++$(error Unsupported implementation $(implementation))
++endif
++
++PROGRAMS = pw-argon2.la
++LTVER = 0:0:0
++
++#prefix=/usr/local
++prefix=`grep -e "^prefix =" $(LDAP_BUILD)/Makefile | cut -d= -f2`
++
++exec_prefix=$(prefix)
++ldap_subdir=/openldap
++
++libdir=$(exec_prefix)/lib
++libexecdir=$(exec_prefix)/libexec
++moduledir = $(libexecdir)$(ldap_subdir)
++
++.SUFFIXES: .c .o .lo
++
++.c.lo:
++	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
++
++all:		$(PROGRAMS)
++
++pw-argon2.la: pw-argon2.lo
++	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	-rpath $(moduledir) -module -o $@ $? $(LIBS)
++
++clean:
++	rm -rf *.o *.lo *.la .libs
++
++install:	$(PROGRAMS)
++	mkdir -p $(DESTDIR)$(moduledir)
++	for p in $(PROGRAMS) ; do \
++		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
++	done
+--- /dev/null
++++ b/contrib/slapd-modules/passwd/argon2/README
+@@ -0,0 +1,109 @@
++Argon2 OpenLDAP support
++----------------------
++
++slapd-argon2.c provides support for ARGON2 hashed passwords in OpenLDAP. For
++instance, one could have the LDAP attribute:
++
++userPassword: {ARGON2}$argon2i$v=19$m=4096,t=3,p=1$c2FsdHNhbHQ$DKlexoEJUoZTmkAAC3SaMWk30El9/RvVhlqGo6afIng
++
++or:
++
++userPassword: {ARGON2}$argon2i$v=19$m=4096,t=3,p=1$c2FsdHNhbHRzYWx0$qOCkx9nMeFlaGOO4DUmPDgrlUbgMMuO9T1+vQCFuyzw
++
++Both hash the password "secret", the first using the salt "saltsalt", the second using the salt "saltsaltsalt"
++
++Building
++--------
++
++1) Customize the OPENLDAP variable in Makefile to point to the OpenLDAP
++source root.
++
++For initial testing you might also want to edit DEFS to define
++SLAPD_ARGON2_DEBUG, which enables logging to stderr (don't leave this on
++in production, as it prints passwords in cleartext).
++
++2) Run 'make' to produce slapd-argon2.so
++
++3) Copy slapd-argon2.so somewhere permanent.
++
++4) Edit your slapd.conf (eg. /etc/ldap/slapd.conf), and add:
++
++moduleload ...path/to/slapd-argon2.so
++
++5) Restart slapd.
++
++
++Configuring
++-----------
++
++The {ARGON2} password scheme should now be recognised.
++
++You can also tell OpenLDAP to use one of this scheme when processing LDAP
++Password Modify Extended Operations, thanks to the password-hash option in
++slapd.conf:
++
++password-hash	{ARGON2}
++
++
++Testing
++-------
++
++A quick way to test whether it's working is to customize the rootdn and
++rootpw in slapd.conf, eg:
++
++rootdn          "cn=admin,dc=example,dc=com"
++
++# This hashes the string 'secret', with a random salt
++rootpw          {ARGON2}$argon2i$v=19$m=4096,t=3,p=1$uJyf0UfB25SQTfX7oCyK2w$U45DJqEFwD0yFaLvTVyACHLvGMwzNGf19dvzPR8XvGc
++
++
++Then to test, run something like:
++
++ldapsearch -b "dc=example,dc=com" -D "cn=admin,dc=example,dc=com" -x -w secret
++
++
++-- Test hashes:
++
++Test hashes can be generated with argon2:
++$ echo -n "secret" | argon2 "saltsalt" -e
++$argon2i$v=19$m=4096,t=3,p=1$c2FsdHNhbHQ$DKlexoEJUoZTmkAAC3SaMWk30El9/RvVhlqGo6afIng
++
++$ echo -n "secret" | argon2 "saltsaltsalt" -e
++$argon2i$v=19$m=4096,t=3,p=1$c2FsdHNhbHRzYWx0$qOCkx9nMeFlaGOO4DUmPDgrlUbgMMuO9T1+vQCFuyzw
++
++$ echo -n "secretsecret" | argon2 "saltsalt" -e
++$argon2i$v=19$m=4096,t=3,p=1$c2FsdHNhbHQ$U0Pd/wEsssZ9bHezDA8oxHnWe01xftykEy+7ehM2vic
++
++$ echo -n "secretsecret" | argon2 "saltsaltsalt" -e
++$argon2i$v=19$m=4096,t=3,p=1$c2FsdHNhbHRzYWx0$fkvoOwKgVtlX9ZDqcHFyyArBvqnAM0Igca8SScB4Jsc
++
++
++
++Alternatively we could modify an existing user's password with
++ldappasswd, and then test binding as that user:
++
++$ ldappasswd -D "cn=admin,dc=example,dc=com" -x -W -S uid=jturner,ou=People,dc=example,dc=com
++New password: secret
++Re-enter new password: secret
++Enter LDAP Password: <cn=admin's password>
++
++$ ldapsearch -b "dc=example,dc=com" -D "uid=jturner,ou=People,dc=example,dc=com" -x -w secret
++
++
++
++---
++
++This work is part of OpenLDAP Software <http://www.openldap.org/>.
++
++Copyright 2017 The OpenLDAP Foundation.
++All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted only as authorized by the OpenLDAP
++Public License.
++
++A copy of this license is available in the file LICENSE in the
++top-level directory of the distribution or, alternatively, at
++<http://www.OpenLDAP.org/license.html>.
++
++---
+--- /dev/null
++++ b/contrib/slapd-modules/passwd/argon2/pw-argon2.c
+@@ -0,0 +1,213 @@
++/* pw-argon2.c - Password module for argon2 */
++/* $OpenLDAP$ */
++/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
++ *
++ * Copyright 2017 The OpenLDAP Foundation.
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted only as authorized by the OpenLDAP
++ * Public License.
++ *
++ * A copy of this license is available in the file LICENSE in the
++ * top-level directory of the distribution or, alternatively, at
++ * <http://www.OpenLDAP.org/license.html>.
++ */
++
++#include "portable.h"
++#include "ac/string.h"
++#include "lber_pvt.h"
++#include "lutil.h"
++
++#include <stdint.h>
++#include <stdlib.h>
++
++#ifdef SLAPD_ARGON2_USE_ARGON2
++#include <argon2.h>
++
++/*
++ * For now, we hardcode the default values from the argon2 command line tool
++ * (as of argon2 release 20161029)
++ */
++#define SLAPD_ARGON2_ITERATIONS 3
++#define SLAPD_ARGON2_MEMORY (1 << 12)
++#define SLAPD_ARGON2_PARALLELISM 1
++#define SLAPD_ARGON2_SALT_LENGTH 16
++#define SLAPD_ARGON2_HASH_LENGTH 32
++
++#else /* !SLAPD_ARGON2_USE_ARGON2 */
++#include <sodium.h>
++
++/*
++ * Or libsodium moderate settings
++ */
++#define SLAPD_ARGON2_ITERATIONS crypto_pwhash_OPSLIMIT_INTERACTIVE
++#define SLAPD_ARGON2_MEMORY crypto_pwhash_MEMLIMIT_INTERACTIVE
++#define SLAPD_ARGON2_PARALLELISM 1
++#define SLAPD_ARGON2_SALT_LENGTH crypto_pwhash_SALTBYTES
++#define SLAPD_ARGON2_HASH_LENGTH 32
++
++#endif
++
++static unsigned long iterations = SLAPD_ARGON2_ITERATIONS;
++static unsigned long memory = SLAPD_ARGON2_MEMORY;
++static unsigned long parallelism = SLAPD_ARGON2_PARALLELISM;
++
++const struct berval slapd_argon2_scheme = BER_BVC("{ARGON2}");
++
++static int
++slapd_argon2_hash(
++		const struct berval *scheme,
++		const struct berval *passwd,
++		struct berval *hash,
++		const char **text )
++{
++
++	/*
++	 * Duplicate these values here so future code which allows
++	 * configuration has an easier time.
++	 */
++	uint32_t salt_length, hash_length;
++	char *p;
++	int rc = LUTIL_PASSWD_ERR;
++
++#ifdef SLAPD_ARGON2_USE_ARGON2
++	struct berval salt;
++	size_t encoded_length;
++
++	salt_length = SLAPD_ARGON2_SALT_LENGTH;
++	hash_length = SLAPD_ARGON2_HASH_LENGTH;
++
++	encoded_length = argon2_encodedlen( iterations, memory, parallelism,
++			salt_length, hash_length, Argon2_id );
++
++	salt.bv_len = salt_length;
++	salt.bv_val = ber_memalloc( salt.bv_len );
++
++	if ( salt.bv_val == NULL ) {
++		return LUTIL_PASSWD_ERR;
++	}
++
++	if ( lutil_entropy( (unsigned char*)salt.bv_val, salt.bv_len ) ) {
++		ber_memfree( salt.bv_val );
++		return LUTIL_PASSWD_ERR;
++	}
++
++	p = hash->bv_val = ber_memalloc( scheme->bv_len + encoded_length );
++	if ( p == NULL ) {
++		ber_memfree( salt.bv_val );
++		return LUTIL_PASSWD_ERR;
++	}
++
++	AC_MEMCPY( p, scheme->bv_val, scheme->bv_len );
++	p += scheme->bv_len;
++
++	/*
++	 * Do the actual heavy lifting
++	 */
++	if ( argon2i_hash_encoded( iterations, memory, parallelism,
++				passwd->bv_val, passwd->bv_len,
++				salt.bv_val, salt_length, hash_length,
++				p, encoded_length ) == 0 ) {
++		rc = LUTIL_PASSWD_OK;
++	}
++	hash->bv_len = scheme->bv_len + encoded_length;
++	ber_memfree( salt.bv_val );
++
++#else /* !SLAPD_ARGON2_USE_ARGON2 */
++	/* Not exposed by libsodium
++	salt_length = SLAPD_ARGON2_SALT_LENGTH;
++	hash_length = SLAPD_ARGON2_HASH_LENGTH;
++	*/
++
++	p = hash->bv_val = ber_memalloc( scheme->bv_len + crypto_pwhash_STRBYTES );
++	if ( p == NULL ) {
++		return LUTIL_PASSWD_ERR;
++	}
++
++	AC_MEMCPY( hash->bv_val, scheme->bv_val, scheme->bv_len );
++	p += scheme->bv_len;
++
++	if ( crypto_pwhash_str( p, passwd->bv_val, passwd->bv_len,
++				iterations, memory ) == 0 ) {
++		hash->bv_len = strlen( hash->bv_val );
++		rc = LUTIL_PASSWD_OK;
++	}
++#endif
++
++	if ( rc ) {
++		ber_memfree( hash->bv_val );
++		return LUTIL_PASSWD_ERR;
++	}
++
++	return LUTIL_PASSWD_OK;
++}
++
++static int
++slapd_argon2_verify(
++		const struct berval *scheme,
++		const struct berval *passwd,
++		const struct berval *cred,
++		const char **text )
++{
++	int rc = LUTIL_PASSWD_ERR;
++
++#ifdef SLAPD_ARGON2_USE_ARGON2
++	if ( strncmp( passwd->bv_val, "$argon2i$", STRLENOF("$argon2i$") ) == 0 ) {
++		rc = argon2i_verify( passwd->bv_val, cred->bv_val, cred->bv_len );
++	} else if ( strncmp( passwd->bv_val, "$argon2d$", STRLENOF("$argon2d$") ) == 0 ) {
++		rc = argon2d_verify( passwd->bv_val, cred->bv_val, cred->bv_len );
++	} else if ( strncmp( passwd->bv_val, "$argon2id$", STRLENOF("$argon2id$") ) == 0 ) {
++		rc = argon2id_verify( passwd->bv_val, cred->bv_val, cred->bv_len );
++	}
++#else /* !SLAPD_ARGON2_USE_ARGON2 */
++	rc = crypto_pwhash_str_verify( passwd->bv_val, cred->bv_val, cred->bv_len );
++#endif
++
++	if ( rc ) {
++		return LUTIL_PASSWD_ERR;
++	}
++	return LUTIL_PASSWD_OK;
++}
++
++int init_module( int argc, char *argv[] )
++{
++	int i;
++
++	for ( i=0; i < argc; i++ ) {
++		char *p;
++		unsigned long value;
++
++		switch ( *argv[i] ) {
++			case 'm':
++				p = strchr( argv[i], '=' );
++				if ( !p || lutil_atoulx( &value, p+1, 0 ) ) {
++					return -1;
++				}
++				memory = value;
++				break;
++
++			case 't':
++				p = strchr( argv[i], '=' );
++				if ( !p || lutil_atoulx( &value, p+1, 0 ) ) {
++					return -1;
++				}
++				iterations = value;
++				break;
++
++			case 'p':
++				p = strchr( argv[i], '=' );
++				if ( !p || lutil_atoulx( &value, p+1, 0 ) ) {
++					return -1;
++				}
++				parallelism = value;
++				break;
++
++			default:
++				return -1;
++		}
++	}
++
++	return lutil_passwd_add( (struct berval *)&slapd_argon2_scheme,
++			slapd_argon2_verify, slapd_argon2_hash );
++}
