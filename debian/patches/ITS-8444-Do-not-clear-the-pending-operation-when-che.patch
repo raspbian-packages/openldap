@@ -1,0 +1,30 @@
+From bb6438fb7ae32a622f456af8c4c9b8d479d5b209 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ond=C5=99ej=20Kuzn=C3=ADk?= <ondra@mistotebe.net>
+Date: Fri, 25 Aug 2017 16:25:23 +0100
+Subject: [PATCH] ITS#8444 Do not clear the pending operation when
+ checkpointing
+
+When a checkpoint happens, if we remove the CSN from the pending list,
+accesslog won't pass it onto the accesslog DB. But in a delta-mmr
+scenario, an accesslog entry without a CSN faces a race where it might
+be applied twice - that usually fails and causes a full refresh, other
+times it can cause a silent desync - both are undesirable.
+---
+ servers/slapd/overlays/syncprov.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/servers/slapd/overlays/syncprov.c b/servers/slapd/overlays/syncprov.c
+index 3e7667336..4c2d939d4 100644
+--- a/servers/slapd/overlays/syncprov.c
++++ b/servers/slapd/overlays/syncprov.c
+@@ -1494,6 +1494,7 @@ syncprov_checkpoint( Operation *op, slap_overinst *on )
+ 	opm.o_bd->bd_info = on->on_info->oi_orig;
+ 	opm.o_managedsait = SLAP_CONTROL_NONCRITICAL;
+ 	opm.o_no_schema_check = 1;
++	opm.o_opid = -1;
+ 	opm.o_bd->be_modify( &opm, &rsm );
+ 
+ 	if ( rsm.sr_err == LDAP_NO_SUCH_OBJECT &&
+-- 
+2.11.0
+
