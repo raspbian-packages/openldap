@@ -1,9 +1,16 @@
-openldap (2.4.47+dfsg-3+rpi1+deb10u1) buster-staging; urgency=medium
+openldap (2.4.47+dfsg-3+rpi1+deb10u2) buster-staging; urgency=medium
 
   [changes brought forward from 2.4.42+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 31 Aug 2015 16:17:47 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Mon, 09 Sep 2019 13:45:58 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 30 Apr 2020 19:37:36 +0000
+
+openldap (2.4.47+dfsg-3+deb10u2) buster-security; urgency=high
+
+  * Fix slapd to limit depth of nested expressions in search filters
+    (ITS#9202)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 20 Apr 2020 11:19:54 -0700
 
 openldap (2.4.47+dfsg-3+deb10u1) buster; urgency=medium
 
