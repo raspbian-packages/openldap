@@ -15,7 +15,7 @@ OPT = -g -O2 -Wall
 INCS = $(LDAP_INC)
 LIBS = $(LDAP_LIB)
 
-implementation = sodium
+implementation = argon2
 
 ifeq ($(implementation),argon2)
 LIBS += -largon2
@@ -44,12 +44,12 @@ man5dir = $(mandir)/man5
 .SUFFIXES: .c .o .lo
 
 .c.lo:
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
 
 all:		$(PROGRAMS)
 
 pw-argon2.la: pw-argon2.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:

@@ -19,10 +19,10 @@ LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
 	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
 SSL_INC = 
-SSL_LIB = -lcrypto
+SSL_LIB = -lnettle
 
-HEIMDAL_INC = -I/usr/heimdal/include
-HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
+HEIMDAL_INC = $(shell krb5-config.heimdal --cflags kadm-server)
+HEIMDAL_LIB = $(shell krb5-config.heimdal --libs kadm-server)
 
 LIBTOOL = $(LDAP_BUILD)/libtool
 CC = gcc
@@ -30,7 +30,8 @@ OPT = -g -O2 -Wall
 # Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
 DEFS = -DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
 INCS = $(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
-LIBS = $(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
+# put /usr/lib/heimdal before /usr/lib in case libkrb5-dev is installed, #745356
+LIBS = $(HEIMDAL_LIB) $(LDAP_LIB) $(SSL_LIB)
 
 PROGRAMS = smbk5pwd.la
 LTVER = 0:0:0
@@ -46,12 +47,12 @@ moduledir = $(libexecdir)$(ldap_subdir)
 .SUFFIXES: .c .o .lo
 
 .c.lo:
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
 
 all: $(PROGRAMS)
 
 smbk5pwd.la:	smbk5pwd.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
