@@ -1,8 +1,17 @@
-openldap (2.4.53+dfsg-1+rpi1) bullseye-staging; urgency=medium
+openldap (2.4.54+dfsg-1+rpi1) bullseye-staging; urgency=medium
 
+  [changes brought forward from 2.4.53+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 14 Sep 2020 14:19:10 +0000]
   * Disable testsuite.
 
- -- Peter Michael Green <plugwash@raspbian.org>  Mon, 14 Sep 2020 14:19:10 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Mon, 26 Oct 2020 12:13:39 +0000
+
+openldap (2.4.54+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Change upstream Homepage and get-orig-source URLs to HTTPS.
+  * Create debian/gbp.conf.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 18 Oct 2020 16:03:46 +0000
 
 openldap (2.4.53+dfsg-1) unstable; urgency=medium
 
