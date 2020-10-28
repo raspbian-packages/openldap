@@ -12,7 +12,7 @@ OPT = -g -O2 -Wall
 #DEFS = -DSLAPD_PBKDF2_DEBUG
 
 INCS = $(LDAP_INC)
-LIBS = $(LDAP_LIB) -lcrypto
+LIBS = $(LDAP_LIB) -lnettle
 
 PROGRAMS = pw-pbkdf2.la
 LTVER = 0:0:0
@@ -28,12 +28,12 @@ moduledir = $(libexecdir)$(ldap_subdir)
 .SUFFIXES: .c .o .lo
 
 .c.lo:
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
 
 all:		$(PROGRAMS)
 
 pw-pbkdf2.la: pw-pbkdf2.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
