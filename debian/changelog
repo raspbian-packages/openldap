@@ -1,14 +1,25 @@
-openldap (2.4.55+dfsg-1+rpi1) bullseye-staging; urgency=medium
+openldap (2.4.56+dfsg-1+rpi1) bullseye-staging; urgency=medium
 
   [changes brought forward from 2.4.53+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 14 Sep 2020 14:19:10 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 05 Nov 2020 18:50:51 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 19 Nov 2020 06:52:02 +0000
+
+openldap (2.4.56+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+    - Fixed slapd abort due to assertion failure in Certificate List syntax
+      validation (ITS#9383)
+    - Fixed slapd abort due to assertion failure in CSN normalization with
+      invalid input (ITS#9384)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Wed, 11 Nov 2020 09:13:56 -0800
 
 openldap (2.4.55+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
-    - Fixed slapd normalization handling with modrdn (ITS#9370)
+    - Fixed slapd normalization handling with modrdn
+      (ITS#9370) (CVE-2020-25692)
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 27 Oct 2020 21:07:29 -0700
 
