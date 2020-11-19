@@ -1,14 +1,30 @@
-openldap (2.4.47+dfsg-3+rpi1+deb10u2) buster-staging; urgency=medium
+openldap (2.4.47+dfsg-3+rpi1+deb10u4) buster-staging; urgency=medium
 
   [changes brought forward from 2.4.42+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 31 Aug 2015 16:17:47 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 30 Apr 2020 19:37:36 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 19 Nov 2020 01:41:40 +0000
+
+openldap (2.4.47+dfsg-3+deb10u4) buster-security; urgency=high
+
+  * Fix slapd abort due to assertion failure in Certificate List syntax
+    validation (ITS#9383) (CVE-2020-25709)
+  * Fix slapd abort due to assertion failure in CSN normalization with invalid
+    input (ITS#9384) (CVE-2020-25710)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 16 Nov 2020 17:23:45 -0800
+
+openldap (2.4.47+dfsg-3+deb10u3) buster-security; urgency=high
+
+  * Fix slapd normalization handling with modrdn
+    (ITS#9370) (CVE-2020-25692)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 29 Oct 2020 18:36:26 -0700
 
 openldap (2.4.47+dfsg-3+deb10u2) buster-security; urgency=high
 
   * Fix slapd to limit depth of nested expressions in search filters
-    (ITS#9202)
+    (ITS#9202) (CVE-2020-12243)
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 20 Apr 2020 11:19:54 -0700
 
