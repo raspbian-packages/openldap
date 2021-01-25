@@ -1,0 +1,33 @@
+From d169e7958a3e0dc70f59c8374bf8a59833b7bdd8 Mon Sep 17 00:00:00 2001
+From: Howard Chu <hyc@openldap.org>
+Date: Tue, 1 Dec 2020 19:03:24 +0000
+Subject: [PATCH] ITS#9413 fix slap_parse_user
+
+---
+ servers/slapd/saslauthz.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+--- a/servers/slapd/saslauthz.c
++++ b/servers/slapd/saslauthz.c
+@@ -156,10 +156,9 @@
+ 	user->bv_val++;
+ 	user->bv_len = id->bv_len - ( user->bv_val - id->bv_val );
+ 
+-	mech->bv_val = ber_bvchr( id, '.' );
+-	if ( !BER_BVISNULL( mech ) ) {
+-		mech->bv_val[ 0 ] = '\0';
+-		mech->bv_val++;
++	if ( id->bv_val[1] == '.' ) {
++		id->bv_val[1] = '\0';
++		mech->bv_val = id->bv_val + 2;
+ 		mech->bv_len = user->bv_val - mech->bv_val - 1;
+ 
+ 		realm->bv_val = ber_bvchr( mech, '/' );
+@@ -172,6 +171,7 @@
+ 		}
+ 
+ 	} else {
++		BER_BVZERO( mech );
+ 		BER_BVZERO( realm );
+ 	}
+ 
