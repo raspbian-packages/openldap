@@ -1,9 +1,16 @@
-openldap (2.4.47+dfsg-3+rpi1+deb10u5) buster-staging; urgency=medium
+openldap (2.4.47+dfsg-3+rpi1+deb10u6) buster-staging; urgency=medium
 
   [changes brought forward from 2.4.42+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 31 Aug 2015 16:17:47 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 04 Feb 2021 17:33:33 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Mon, 22 Feb 2021 06:44:51 +0000
+
+openldap (2.4.47+dfsg-3+deb10u6) buster-security; urgency=high
+
+  * Fix slapd assertion failure in Certificate List Exact Assertion validation
+    (ITS#9454) (CVE-2021-27212)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 14 Feb 2021 10:32:34 -0800
 
 openldap (2.4.47+dfsg-3+deb10u5) buster-security; urgency=high
 
