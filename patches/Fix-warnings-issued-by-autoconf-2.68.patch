@@ -1,0 +1,103 @@
+From 5adcdb7642dbafae484b8f3feb391490ff9be087 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ond=C5=99ej=20Kuzn=C3=ADk?= <ondra@mistotebe.net>
+Date: Wed, 24 May 2017 16:12:48 +0100
+Subject: [PATCH] Fix warnings issued by autoconf 2.68+
+
+---
+ build/openldap.m4 | 12 ++++++------
+ configure.in      |  8 ++++----
+ 2 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/build/openldap.m4 b/build/openldap.m4
+index 95b86ee457..d8cf32f707 100644
+--- a/build/openldap.m4
++++ b/build/openldap.m4
+@@ -321,13 +321,13 @@ dnl --------------------------------------------------------------------
+ dnl Get major and minor version from <db.h>
+ AC_DEFUN([OL_BDB_HEADER_VERSION],
+ [AC_CACHE_CHECK([for Berkeley DB major version in db.h], [ol_cv_bdb_major],[
+-	AC_LANG_CONFTEST([
++	AC_LANG_CONFTEST([AC_LANG_SOURCE([
+ #include <db.h>
+ #ifndef DB_VERSION_MAJOR
+ #	define DB_VERSION_MAJOR 1
+ #endif
+ __db_version DB_VERSION_MAJOR
+-])
++])])
+ 	set X `eval "$ac_cpp -P conftest.$ac_ext" | $EGREP __db_version` none none
+ 	ol_cv_bdb_major=${3}
+ ])
+@@ -337,13 +337,13 @@ esac
+ 
+ dnl Determine minor version
+ AC_CACHE_CHECK([for Berkeley DB minor version in db.h], [ol_cv_bdb_minor],[
+-	AC_LANG_CONFTEST([
++	AC_LANG_CONFTEST([AC_LANG_SOURCE([
+ #include <db.h>
+ #ifndef DB_VERSION_MINOR
+ #	define DB_VERSION_MINOR 0
+ #endif
+ __db_version DB_VERSION_MINOR
+-])
++])])
+ 	set X `eval "$ac_cpp -P conftest.$ac_ext" | $EGREP __db_version` none none
+ 	ol_cv_bdb_minor=${3}
+ ])
+@@ -678,7 +678,7 @@ AC_DEFUN([OL_PTHREAD_TEST_FUNCTION],[[
+ ]])
+ 
+ AC_DEFUN([OL_PTHREAD_TEST_PROGRAM],
+-AC_LANG_SOURCE([OL_PTHREAD_TEST_INCLUDES
++[AC_LANG_SOURCE([OL_PTHREAD_TEST_INCLUDES
+ 
+ int main(argc, argv)
+ 	int argc;
+@@ -686,7 +686,7 @@ int main(argc, argv)
+ {
+ OL_PTHREAD_TEST_FUNCTION
+ }
+-]))
++])])
+ dnl --------------------------------------------------------------------
+ AC_DEFUN([OL_PTHREAD_TRY], [# Pthread try link: $1 ($2)
+ if test "$ol_link_threads" = no ; then
+diff --git a/configure.in b/configure.in
+index 0c0d990e82..38db157bd3 100644
+--- a/configure.in
++++ b/configure.in
+@@ -1225,11 +1225,11 @@ if test $ol_link_tls = no ; then
+ 		AC_CHECK_HEADERS(gnutls/gnutls.h)
+ 
+ 		if test $ac_cv_header_gnutls_gnutls_h = yes ; then
+-			AC_PREPROC_IFELSE(
++			AC_PREPROC_IFELSE([AC_LANG_SOURCE(
+                                [[#include <gnutls/gnutls.h>]
+ [#if GNUTLS_VERSION_NUMBER < 0x020c00]
+ [#error "GnuTLS 2.12.0 or newer required"]
+-[#endif]],
++[#endif]])],
+                                        , [AC_MSG_FAILURE([GnuTLS is too old])])
+ 
+ 			AC_CHECK_LIB(gnutls, gnutls_init,
+@@ -1506,7 +1506,7 @@ pthread_rwlock_t rwlock;
+ 				AC_MSG_ERROR([LinuxThreads header/library mismatch]);
+ 			fi
+ 
+-			AC_CACHE_CHECK([if pthread_create() works],
++			AC_CACHE_CHECK([AC_LANG_SOURCE([if pthread_create() works])],
+ 				ol_cv_pthread_create_works,[
+ 			AC_RUN_IFELSE([OL_PTHREAD_TEST_PROGRAM],
+ 				[ol_cv_pthread_create_works=yes],
+@@ -2556,7 +2556,7 @@ if test "$ac_cv_func_getpeereid" != yes; then
+ 		fi
+ 		AC_CHECK_MEMBERS([struct stat.st_fstype, struct stat.st_vfstype])
+ 		if test "$ac_cv_member_struct_stat_st_fstype" = yes; then
+-			AC_COMPILE_IFELSE([struct stat st; char *ptr=st.st_fstype;],
++			AC_COMPILE_IFELSE([AC_LANG_SOURCE([struct stat st; char *ptr=st.st_fstype;])],
+ 				AC_DEFINE([HAVE_STRUCT_STAT_ST_FSTYPE_CHAR],1,[define to 1 if st_fstype is char *]),
+ 				AC_DEFINE([HAVE_STRUCT_STAT_ST_FSTYPE_INT],1,[define to 1 if st_fstype is int]))
+ 		fi
+-- 
+2.33.0
+
