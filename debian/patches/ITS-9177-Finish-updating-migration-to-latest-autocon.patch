@@ -1,0 +1,67 @@
+From 1a55a5c61bbb94ecb2585cfc95a29699cc4bb64e Mon Sep 17 00:00:00 2001
+From: Quanah Gibson-Mount <quanah@openldap.org>
+Date: Thu, 9 Apr 2020 23:38:01 +0000
+Subject: [PATCH] ITS#9177 - Finish updating migration to latest autoconf and
+ related build tools
+
+---
+ configure.in | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
+
+diff --git a/configure.in b/configure.in
+index 838f3616d2..5b69c7abb6 100644
+--- a/configure.in
++++ b/configure.in
+@@ -26,8 +26,7 @@ dnl Configure.in for OpenLDAP
+ AC_COPYRIGHT([[Copyright 1998-2021 The OpenLDAP Foundation. All rights reserved.
+ Restrictions apply, see COPYRIGHT and LICENSE files.]])
+ AC_REVISION([$Id: 0c7c0a9ee7af45f44c9f20258933ee4f03368876 $])
+-AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
+-m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
++AC_INIT([OpenLDAP],,[https://bugs.openldap.org],,[https://www.openldap.org])
+ AC_CONFIG_SRCDIR(build/version.sh)dnl
+ dnl ----------------------------------------------------------------
+ dnl OpenLDAP Autoconf Macros
+@@ -35,6 +34,7 @@ builtin(include, build/openldap.m4)dnl
+ dnl ================================================================
+ 
+ AC_CONFIG_AUX_DIR(build)dnl
++AC_CONFIG_MACRO_DIRS([build])
+ 
+ eval `$ac_aux_dir/version.sh`
+ if test -z "$OL_STRING"; then
+@@ -69,9 +69,8 @@ dnl Determine host platform
+ dnl		we try not to use this for much
+ AC_CANONICAL_TARGET([])
+ 
+-AM_INIT_AUTOMAKE([$OL_PACKAGE],[$OL_VERSION], [no defines])dnl
+-AC_SUBST(PACKAGE)dnl
+-AC_SUBST(VERSION)dnl
++AC_SUBST(PACKAGE,$OL_PACKAGE)dnl
++AC_SUBST(VERSION,$OL_VERSION)dnl
+ AC_DEFINE_UNQUOTED(OPENLDAP_PACKAGE,"$PACKAGE",Package)
+ AC_DEFINE_UNQUOTED(OPENLDAP_VERSION,"$VERSION",Version)
+ 
+@@ -89,10 +88,7 @@ AC_SUBST(OPENLDAP_LIBVERSION)dnl
+ OPENLDAP_RELEASE_DATE="$OL_RELEASE_DATE"
+ AC_SUBST(OPENLDAP_RELEASE_DATE)dnl
+ 
+-dnl We use autoconf features new to 2.59.  Later versions like won't work.
+-dnl aclocal.m4 should be built using aclocal from automake 1.5
+-dnl libtool 1.5 should be installed.
+-AC_PREREQ(2.59)dnl Required Autoconf version
++AC_PREREQ(2.69)dnl Required Autoconf version
+ 
+ AH_TOP([
+ /* begin of portable.h.pre */
+@@ -674,6 +670,7 @@ fi
+ 
+ AC_LIBTOOL_WIN32_DLL
+ AC_LIBTOOL_DLOPEN
++AC_PROG_MAKE_SET
+ AC_PROG_LIBTOOL
+ 
+ dnl ----------------------------------------------------------------
+-- 
+2.33.0
+
