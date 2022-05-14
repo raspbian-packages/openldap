@@ -13,7 +13,7 @@ DEFS =
 INCS = $(LDAP_INC)
 LIBS = $(LDAP_LIB)
 
-PROGRAMS = pw-kerberos.la pw-netscape.la pw-radius.la pw-apr1.la
+PROGRAMS = pw-netscape.la pw-apr1.la
 LTVER = 0:0:0
 
 prefix=/usr/local
@@ -27,24 +27,24 @@ moduledir = $(libexecdir)$(ldap_subdir)
 .SUFFIXES: .c .o .lo
 
 .c.lo:
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
 
 all: $(PROGRAMS)
 
 pw-kerberos.la:	kerberos.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? -lkrb5
 
 pw-netscape.la:	netscape.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $?
 
 pw-radius.la:	radius.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? -lradius
 
 pw-apr1.la:	apr1.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $?
 
 clean:
