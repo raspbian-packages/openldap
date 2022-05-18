@@ -1,0 +1,23 @@
+From 9d0e8485f3113505743baabf1167e01e4558ccf5 Mon Sep 17 00:00:00 2001
+From: Howard Chu <hyc@openldap.org>
+Date: Sun, 20 Dec 2020 21:31:15 +0000
+Subject: [PATCH] ITS#9428 fix cancel exop
+
+---
+ servers/slapd/cancel.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+--- a/servers/slapd/cancel.c
++++ b/servers/slapd/cancel.c
+@@ -64,6 +64,11 @@
+ 		return LDAP_PROTOCOL_ERROR;
+ 	}
+ 
++	if ( opid == op->o_msgid ) {
++		op->o_cancel = SLAP_CANCEL_DONE;
++		return LDAP_SUCCESS;
++	}
++
+ 	ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
+ 
+ 	if ( op->o_abandon ) {
