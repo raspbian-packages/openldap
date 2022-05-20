@@ -1,9 +1,15 @@
-openldap (2.4.47+dfsg-3+rpi1+deb10u6) buster-staging; urgency=medium
+openldap (2.4.47+dfsg-3+rpi1+deb10u7) buster-staging; urgency=medium
 
   [changes brought forward from 2.4.42+dfsg-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 31 Aug 2015 16:17:47 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Mon, 22 Feb 2021 06:44:51 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Fri, 20 May 2022 14:58:23 +0000
+
+openldap (2.4.47+dfsg-3+deb10u7) buster-security; urgency=high
+
+  * Fix SQL injection in back-sql (ITS#9815) (CVE-2022-29155)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 14 May 2022 11:35:44 -0700
 
 openldap (2.4.47+dfsg-3+deb10u6) buster-security; urgency=high
 
