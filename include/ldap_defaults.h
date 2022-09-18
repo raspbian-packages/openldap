@@ -68,4 +68,6 @@
  */
 #define LLOADD_DEFAULT_CONFIGFILE	LDAP_SYSCONFDIR LDAP_DIRSEP "lloadd.conf"
 
+#define SASL_CONFIGPATH                        LDAP_SYSCONFDIR LDAP_DIRSEP "sasl2"
+
 #endif /* _LDAP_CONFIG_H */
