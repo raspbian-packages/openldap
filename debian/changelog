@@ -1,8 +1,23 @@
-openldap (2.5.13+dfsg-2+rpi1) bookworm-staging; urgency=medium
+openldap (2.5.13+dfsg-3+rpi1) bookworm-staging; urgency=medium
 
+  [changes brought forward from 2.5.13+dfsg-2+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Wed, 05 Oct 2022 12:38:13 +0000]
   * Disable testsuite.
 
- -- Peter Michael Green <plugwash@raspbian.org>  Wed, 05 Oct 2022 12:38:13 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 19 Jan 2023 11:38:01 +0000
+
+openldap (2.5.13+dfsg-3) unstable; urgency=medium
+
+  [ Ryan Tandy ]
+  * Disable flaky test test063-delta-multiprovider. Mitigates #1010608.
+
+  [ Gioele Barabucci ]
+  * slapd.scripts-common: Avoid double-UTF8-encoding org name (Closes: #1016185)
+  * d/slapd.scripts-common: Remove outdated `migrate_to_slapd_d_style`
+  * d/slapd.postinst: Remove test for ancient version
+  * slapd.scripts-common: Remove unused `normalize_ldif`
+  * d/slapd.scripts-common: Use sed instead of perl in `release_diagnostics`
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 13 Jan 2023 16:29:59 -0800
 
 openldap (2.5.13+dfsg-2) unstable; urgency=medium
 

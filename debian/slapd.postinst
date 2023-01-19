@@ -38,21 +38,6 @@ postinst_upgrade_configuration() {					# {{{
 		fi
 	fi
 
-	# Move to slapd.d configuration style.
-	if ! migrate_to_slapd_d_style; then
-		return 1
-	fi
-
-	# One-time upgrade fix for olcAccess on cn=Subschema
-	if previous_version_older 2.4.23-5 && previous_version_newer 2.4.23-3 \
-	   && [ -e "$SLAPD_CONF/cn=config/olcDatabase={-1}frontend.ldif" ] \
-	   && ! grep -i 'olcAccess:.*subschema' "$SLAPD_CONF/cn=config/olcDatabase={-1}frontend.ldif"
-	then
-		sed -i '/olcAccess: {0}/a\
-olcAccess: {1}to dn.exact="" by * read\
-olcAccess: {2}to dn.base="cn=Subschema" by * read' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
-	fi
-
 	# Update permissions of all database directories and /var/run/slapd
 	update_databases_permissions
 	update_permissions /var/run/slapd

@@ -86,6 +86,11 @@ ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	done
 endif
 
+override_dh_auto_test:
+	# Disable flaky test test063-delta-multiprovider (#1010608)
+	rm -f tests/scripts/test063-delta-multiprovider
+	dh_auto_test
+
 override_dh_auto_install:
 	dh_auto_install -- STRIP_OPTS=
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
