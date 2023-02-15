@@ -81,14 +81,20 @@ override_dh_auto_configure:
 override_dh_auto_build:
 	dh_auto_build
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
+	# passwd/sha2 needs special handling, see #1030716 and LP: #2000817
 	for mod in $(CONTRIB_MODULES); do \
-		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
+		if [ "$$mod" = "passwd/sha2" ]; then \
+			EXTRA_OPT="-fno-strict-aliasing"; \
+		else \
+			EXTRA_OPT=""; \
+		fi; \
+		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) OPT+=$$EXTRA_OPT || exit $$?; \
 	done
 endif
 
 override_dh_auto_test:
-	# Disable flaky test test063-delta-multiprovider (#1010608)
-	rm -f tests/scripts/test063-delta-multiprovider
+	# Disable certain timing-sensitive tests which can be flaky on buildds (#1010608)
+	rm -f tests/scripts/test063-delta-multiprovider tests/scripts/test069-delta-multiprovider-starttls
 	dh_auto_test
 
 override_dh_auto_install:

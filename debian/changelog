@@ -1,9 +1,25 @@
-openldap (2.5.13+dfsg-3+rpi1) bookworm-staging; urgency=medium
+openldap (2.5.13+dfsg-5+rpi1) bookworm-staging; urgency=medium
 
   [changes brought forward from 2.5.13+dfsg-2+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Wed, 05 Oct 2022 12:38:13 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 19 Jan 2023 11:38:01 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Wed, 15 Feb 2023 04:06:26 +0000
+
+openldap (2.5.13+dfsg-5) unstable; urgency=medium
+
+  * Fix sha2-contrib autopkgtest failure. Call slappasswd using its full path.
+    (Closes: #1030814)
+  * Disable flaky test test069-delta-multiprovider-starttls.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 07 Feb 2023 17:56:12 -0800
+
+openldap (2.5.13+dfsg-4) unstable; urgency=medium
+
+  [ Andreas Hasenack ]
+  * d/rules: Fix passwd/sha2 build (Closes: #1030716, LP: #2000817)
+  * d/t/sha2-contrib: add test for sha2 module
+
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 06 Feb 2023 19:21:05 -0800
 
 openldap (2.5.13+dfsg-3) unstable; urgency=medium
 
