@@ -407,13 +407,13 @@ would require TLS 1.1.
 Specifying a minimum that is higher than that supported by the
 OpenLDAP implementation will result in it requiring the
 highest level that it does support.
-This parameter is ignored with GnuTLS.
+This parameter is ignored with GnuTLS. On Debian openldap is linked against GnuTLS.
 .TP
 .B TLS_RANDFILE <filename>
 Specifies the file to obtain random bits from when /dev/[u]random is
 not available. Generally set to the name of the EGD/PRNGD socket.
 The environment variable RANDFILE can also be used to specify the filename.
-This parameter is ignored with GnuTLS.
+This parameter is ignored with GnuTLS. On Debian openldap is linked against GnuTLS.
 .TP
 .B TLS_REQCERT <level>
 Specifies what checks to perform on server certificates in a TLS session.
@@ -475,7 +475,7 @@ Specifies if the Certificate Revocation List (CRL) of the CA should be
 used to verify if the server certificates have not been revoked. This
 requires
 .B TLS_CACERTDIR
-parameter to be set. This parameter is ignored with GnuTLS.
+parameter to be set. This parameter is ignored with GnuTLS. On Debian openldap is linked against GnuTLS.
 .B <level>
 can be specified as one of the following keywords:
 .RS
