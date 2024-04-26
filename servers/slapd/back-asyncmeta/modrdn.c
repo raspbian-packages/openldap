@@ -256,8 +256,8 @@ asyncmeta_back_modrdn( Operation *op, SlapReply *rs )
 	      op->o_req_dn.bv_val );
 
 	if (current_time > op->o_time) {
-		Debug(asyncmeta_debug, "==> asyncmeta_back_modrdn[%s]: o_time:[%ld], current time: [%ld]\n",
-		      op->o_log_prefix, op->o_time, current_time );
+		Debug(asyncmeta_debug, "==> asyncmeta_back_modrdn[%s]: o_time:[%lld], current time: [%lld]\n",
+		      op->o_log_prefix, (long long)op->o_time, (long long)current_time );
 	}
 	asyncmeta_new_bm_context(op, rs, &bc, mi->mi_ntargets, mi );
 	if (bc == NULL) {
