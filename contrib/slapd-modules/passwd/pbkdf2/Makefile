@@ -13,7 +13,7 @@ OPT = -g -O2
 #DEFS = -DSLAPD_PBKDF2_DEBUG
 
 SSL_INC =
-SSL_LIB = -lcrypto
+SSL_LIB = -lnettle
 
 INCS = $(LDAP_INC) $(SSL_INC)
 LIBS = $(LDAP_LIB) $(SSL_LIB)
