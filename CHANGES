@@ -1,5 +1,125 @@
 OpenLDAP 2.5 Change Log
 
+OpenLDAP 2.5.17 Release (2024/01/29)
+	Added slapo-dynlist option to disable filter support (ITS#10025)
+	Fixed liblber missing newline on long msg (ITS#10105)
+	Fixed libldap exit handling with OpenSSL3 (ITS#9952)
+	Fixed libldap with TLS and multiple ldap URIs (ITS#10101)
+	Fixed libldap OpenSSL cipher suite handling (ITS#10094)
+	Fixed libldap OpenSSL 3.0 and Diffie-Hellman param files (ITS#10124)
+	Fixed libldap timestamps on Windows (ITS#10100)
+	Fixed lloadd to work when resolv.conf is missing (ITS#10070)
+	Fixed lloadd handling of closing connection (ITS#10083)
+	Fixed slapd to honour disclose in matchedDN handling (ITS#10139)
+	Fixed slapd handling of regex testing in ACLs (ITS#10089)
+	Fixed slapd-asyncmeta when remote suffix is empty (ITS#10076)
+	Fixed slapo-dynlist so it can't be global (ITS#10091)
+	Build
+		Fixed lloadd type mismatches (ITS#10074)
+		Fixed builds for Windows (ITS#10117)
+		Fixed build with clang16 (ITS#10123
+	Documentation
+		Fixed slapo-homedir(5) attribute name for olcHomedirArchivePath (ITS#10057)
+	Minor Cleanup
+		ITS#10059
+		ITS#10068
+		ITS#10109
+		ITS#10110
+		ITS#10129
+		ITS#10130
+		ITS#10135
+		ITS#10144
+		ITS#10145
+		ITS#10153
+
+OpenLDAP 2.5.16 Release (2023/07/31)
+	Fixed slapd cn=config incorrect handling of paused (ITS#10045)
+	Fixed slapd-meta to account for MOD ops being optional (ITS#10067)
+	Fixed slapd-asyncmeta to account for MOD ops being optional (ITS#10067)
+
+OpenLDAP 2.5.15 Release (2023/07/10)
+	Added libldap openssl3 support (ITS#9436, ITS#10030)
+	Fixed libldap handling of TCP KEEPALIVE options (ITS#10015)
+	Fixed libldap with async connections (ITS#10023)
+	Fixed libldap openssl TLSv1.3 cipher suite handling (ITS#10035)
+	Fixed slapd callback handling with overlays that do extended operations (ITS#9990)
+	Fixed slapd conversion of pcache configurations (ITS#10031)
+	Fixed slapd cn=config modification handling with abandon (ITS#10045)
+	Fixed slapo-constraint handling of push replication (ITS#9953)
+	Fixed slapo-dynlist filter evaluation efficiency (ITS#10041)
+	Fixed slapo-pcache handling of invalid schema (ITS#10032)
+	Fixed slapo-ppolicy handling of push replication (ITS#9953)
+	Fixed slapo-ppolicy handling of pwdMinDelay (ITS#10028)
+	Fixed slapo-syncprov abandon handling (ITS#10016)
+	Fixed slapo-translucent handling of invalid schema (ITS#10032)
+	Fixed slapo-unique handling of push replication (ITS#9953)
+	Fixed slapo-variant to improve regex handling (ITS#10048)
+	Build Environment
+		Fixed compatibility with stricter C99 compilers (ITS#10011)
+		Keep .pc files during make clean (ITS#9989)
+	Contrib
+		Fixed slapo-variant handling of push replication (ITS#9953)
+	Minor Cleanup
+		ITS#9855
+		ITS#9995
+		ITS#9996
+		ITS#9997
+		ITS#9998
+		ITS#9999
+		ITS#10000
+		ITS#10003
+		ITS#10004
+		ITS#10033
+		ITS#10037
+		ITS#10039
+		ITS#10046
+		ITS#10063
+
+OpenLDAP 2.5.14 Release (2023/02/08)
+	Fixed client tools to remove 'h' and 'p' options (ITS#9917,ITS#8618)
+	Fixed ldapsearch memory leak with paged results (ITS#9860)
+	Fixed libldap ldif_open_urlto check for failure (ITS#9904)
+	Fixed libldap ldap_url_parsehosts check for failure (ITS#9904)
+	Fixed liblunicode UTF8bvnormalize buffer size (ITS#9955)
+	Fixed lloadd race in epoch.c (ITS#9947)
+	Fixed lloadd to keep listener base around when not active (ITS#9984)
+	Fixed lloadd object reclamation sequencing (ITS#9983)
+	Fixed slapd memory leak with olcAuthIDRewrite (ITS#6035)
+	Fixed slapd transactions extended operations cleanup after write (ITS#9892)
+	Fixed slapd deadlock with replicated cn=config (ITS#9930,ITS#8102)
+	Fixed slapd connection close logic (ITS#9991)
+	Fixed slapd bconfig locking of cn=config entries (ITS#9045)
+	Fixed slapd-mdb max number of index databases to 256 (ITS#9895)
+	Fixed slapd-mdb to always release entries from ADD operations (ITS#9942)
+	Fixed slapd-mdb to fully init empty DN in tool_entry_get (ITS#9940)
+	Fixed slapd-monitor to free remembered cookies (ITS#9339)
+	Fixed slapo-accesslog reqStart ordering matching rule (ITS#9880)
+	Fixed slapo-deref memory leak (ITS#9924)
+	Fixed slapo-dynlist to ignore irrelevant objectClasses (ITS#9897)
+	Fixed slapo-dynlist to avoid unnecessary searches (ITS#9929)
+	Fixed slapo-dynlist to mark internal searches as such (ITS#9960)
+	Fixed slapo-pcache crash in consistency_check (ITS#9966)
+	Fixed slapo-remoteauth memory leaks (ITS#9438)
+	Build Environment
+		Fixed ancient DOS related ifdef checks (ITS#9925)
+		Fixed build process to not use gmake specific features (ITS#9894)
+		Fixed source tree to remove symlinks (ITS#9926)
+		Fixed slapo-otp testdir creation (ITS#9437)
+		Fixed slapd-tester memory leak (ITS#9908)
+		Fixed usage of non-standard C syntax (ITS#9898, ITS#9899, ITS#9901)
+		Fixed usage of bashism (ITS#9900)
+		Fixed test suite portability (ITS#9931)
+	Documentation
+		Fixed ldap_bind(3) to document ber_bvfree in ldap_sasl_bind (ITS#9976)
+		Fixed slapo-asyncmeta(5) to clarify scheduling for target connections (ITS#9941)
+		Fixed slapo-dynlist(5) to clarify configuration settings (ITS#9957)
+		Fixed slapo-unique(5) to clarify when quoting should be used (ITS#9915)
+	Minor cleanup
+		ITS#9935
+		ITS#9336
+		ITS#9337
+		ITS#9985
+
 OpenLDAP 2.5.13 Release (2022/07/14)
 	Fixed librewrite declaration of calloc (ITS#9841)
 	Fixed libldap memory leaks (ITS#9876)

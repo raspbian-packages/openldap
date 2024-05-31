@@ -81,7 +81,7 @@ usage( void )
 
 
 const char options[] = "a:As:St:T:"
-	"d:D:e:h:H:InNO:o:p:QR:U:vVw:WxX:y:Y:Z";
+	"d:D:e:H:InNO:o:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -206,7 +206,12 @@ main( int argc, char *argv[] )
 	if( want_oldpw && oldpw.bv_val == NULL ) {
 		/* prompt for old password */
 		char *ckoldpw;
-		oldpw.bv_val = strdup(getpassphrase(_("Old password: ")));
+		ckoldpw = getpassphrase(_("Old password: "));
+		if ( ckoldpw == NULL ) { /* Allow EOF to exit. */
+			rc = EXIT_FAILURE;
+			goto done;
+		}
+		oldpw.bv_val = strdup( ckoldpw );
 		ckoldpw = getpassphrase(_("Re-enter old password: "));
 
 		if( oldpw.bv_val == NULL || ckoldpw == NULL ||
@@ -231,7 +236,12 @@ main( int argc, char *argv[] )
 	if( want_newpw && newpw.bv_val == NULL ) {
 		/* prompt for new password */
 		char *cknewpw;
-		newpw.bv_val = strdup(getpassphrase(_("New password: ")));
+		cknewpw = getpassphrase(_("New password: "));
+		if ( cknewpw == NULL ) { /* Allow EOF to exit. */
+			rc = EXIT_FAILURE;
+			goto done;
+		}
+		newpw.bv_val = strdup( cknewpw );
 		cknewpw = getpassphrase(_("Re-enter new password: "));
 
 		if( newpw.bv_val == NULL || cknewpw == NULL ||

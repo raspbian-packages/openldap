@@ -108,7 +108,7 @@ forward_final_response(
 
     op->o_res = LLOAD_OP_COMPLETED;
     if ( !op->o_pin_id ) {
-        operation_unlink( op );
+        OPERATION_UNLINK(op);
     }
 
     return rc;
@@ -118,17 +118,22 @@ static int
 handle_unsolicited( LloadConnection *c, BerElement *ber )
 {
     CONNECTION_ASSERT_LOCKED(c);
-    if ( c->c_state != LLOAD_C_PREPARING ) {
-        c->c_state = LLOAD_C_CLOSING;
+
+    assert( c->c_state != LLOAD_C_INVALID );
+    if ( c->c_state == LLOAD_C_DYING ) {
+        CONNECTION_UNLOCK(c);
+        goto out;
     }
+    c->c_state = LLOAD_C_CLOSING;
 
     Debug( LDAP_DEBUG_STATS, "handle_unsolicited: "
             "teardown for upstream connection connid=%lu\n",
             c->c_connid );
 
     CONNECTION_DESTROY(c);
-    ber_free( ber, 1 );
 
+out:
+    ber_free( ber, 1 );
     return -1;
 }
 

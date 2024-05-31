@@ -1,9 +1,58 @@
-openldap (2.5.13+dfsg-5+rpi1) bookworm-staging; urgency=medium
+openldap (2.5.17+dfsg-1+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.5.13+dfsg-2+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Wed, 05 Oct 2022 12:38:13 +0000]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Wed, 15 Feb 2023 04:06:26 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Fri, 31 May 2024 01:34:41 +0000
+
+openldap (2.5.17+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+    - fixed slapo-dynlist so it can't be global (ITS#10091) (Closes: #1040382)
+  * debian/copyright: Exclude doc/guide/admin/guide.html from the upstream
+    source, because the tool required to build it from source is not packaged
+    in Debian. Fixes a Lintian error (source-is-missing).
+  * Update Swedish debconf translation. (Closes: #1056955)
+    Thanks to Martin Bagge and Anders Jonsson.
+  * debian/salsa-ci.yml: Enable Salsa CI pipeline.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 26 Apr 2024 16:09:29 -0700
+
+openldap (2.5.16+dfsg-2) unstable; urgency=medium
+
+  * debian/patches/64-bit-time-t-compat: handle sizeof(time_t) >
+    sizeof(long) in format strings.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 12 Mar 2024 06:26:07 +0000
+
+openldap (2.5.16+dfsg-1) unstable; urgency=medium
+
+  [ Ryan Tandy ]
+  * New upstream release.
+    - fixed possible null pointer dereferences if strdup fails
+      (ITS#9904) (Closes: #1036995, CVE-2023-2953)
+    - fixed unaligned accesses in LMDB on sparc64
+      (ITS#9916) (Closes: #1020319)
+  * Update Turkish debconf translation. (Closes: #1029758)
+    Thanks to Atila KOÇ.
+  * Add Romanian debconf translation. (Closes: #1033177)
+    Thanks to Remus-Gabriel Chelu.
+  * Create an autopkgtest covering basic TLS functionality.
+    Thanks to John Scott.
+  * Drop transitional package slapd-smbk5pwd. (Closes: #1032742)
+  * Drop dbgsym migration for slapd-dbg.
+  * Build and install the ppm module in slapd-contrib. (Closes: #1039740)
+  * Fix implicit declaration of kadm5_s_init_with_password_ctx.
+    (Closes: #1065633)
+
+  [ Sergio Durigan Junior ]
+  * d/control: Bump Standards-Version to 4.6.2; no changes needed.
+  * d/control: Bump debhelper-compat to 13.
+  * d/control: Drop lsb-base from slapd's Depends.
+  * Enable SASL/GSSAPI tests.
+    Thanks to Andreas Hasenack <andreas.hasenack@canonical.com>
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 08 Mar 2024 21:46:26 -0800
 
 openldap (2.5.13+dfsg-5) unstable; urgency=medium
 

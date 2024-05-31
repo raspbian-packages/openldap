@@ -2247,7 +2247,7 @@ sortval_reject:
 				for ( a=c->be->be_acl; a; a = a->acl_next )
 					i++;
 			}
-			if ( parse_acl(c->be, c->fname, c->lineno, c->argc, c->argv, i ) ) {
+			if ( parse_acl( c, i ) ) {
 				if ( SLAP_CONFIG( c->be ) && !c->be->be_acl) {
 					c->be->be_acl = defacl_parsed;
 				}
@@ -2533,7 +2533,7 @@ sortval_reject:
 
 #ifdef LDAP_SLAPI
 		case CFG_PLUGIN:
-			if(slapi_int_read_config(c->be, c->fname, c->lineno, c->argc, c->argv, c->valx) != LDAP_SUCCESS)
+			if(slapi_int_read_config(c) != LDAP_SUCCESS)
 				return(1);
 			slapi_plugins_used++;
 			break;
@@ -4360,7 +4360,8 @@ config_tls_config(ConfigArgs *c) {
 #endif
 
 static CfEntryInfo *
-config_find_base( CfEntryInfo *root, struct berval *dn, CfEntryInfo **last )
+config_find_base( CfEntryInfo *root, struct berval *dn, CfEntryInfo **last,
+	Operation *op )
 {
 	struct berval cdn;
 	char *c;
@@ -4377,7 +4378,14 @@ config_find_base( CfEntryInfo *root, struct berval *dn, CfEntryInfo **last )
 	for (;*c != ',';c--);
 
 	while(root) {
-		*last = root;
+		if ( !op || access_allowed( op, root->ce_entry,
+					slap_schema.si_ad_entry, NULL, ACL_DISCLOSE, NULL ) ) {
+			/*
+			 * ITS#10139: Only record the lowermost entry that the user has
+			 * disclose access to
+			 */
+			*last = root;
+		}
 		for (--c;c>dn->bv_val && *c != ',';c--);
 		cdn.bv_val = c;
 		if ( *c == ',' )
@@ -5495,7 +5503,7 @@ config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca, SlapReply *rs,
 	 * Databases and Overlays to be inserted. Don't do any
 	 * auto-renumbering if manageDSAit control is present.
 	 */
-	ce = config_find_base( cfb->cb_root, &e->e_nname, &last );
+	ce = config_find_base( cfb->cb_root, &e->e_nname, &last, op );
 	if ( ce ) {
 		if ( ( op && op->o_managedsait ) ||
 			( ce->ce_type != Cft_Database && ce->ce_type != Cft_Overlay &&
@@ -5516,14 +5524,14 @@ config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca, SlapReply *rs,
 	/* If last is NULL, the new entry is the root/suffix entry, 
 	 * otherwise last should be the parent.
 	 */
-	if ( last && !dn_match( &last->ce_entry->e_nname, &pdn ) ) {
-		if ( rs ) {
+	if ( cfb->cb_root && ( !last || !dn_match( &last->ce_entry->e_nname, &pdn ) ) ) {
+		if ( last && rs ) {
 			rs->sr_matched = last->ce_entry->e_name.bv_val;
 		}
 		Debug( LDAP_DEBUG_TRACE, "%s: config_add_internal: "
 			"DN=\"%s\" not child of DN=\"%s\"\n",
 			log_prefix, e->e_name.bv_val,
-			last->ce_entry->e_name.bv_val );
+			last ? last->ce_entry->e_name.bv_val : "" );
 		return LDAP_NO_SUCH_OBJECT;
 	}
 
@@ -5953,12 +5961,21 @@ config_back_add( Operation *op, SlapReply *rs )
 		}
 	}
 
+	/*
+	 * ITS#10045 Pre-check for abandon but be willing to handle that the
+	 * operation might be abandoned while waiting for the server to pause.
+	 */
 	if ( op->o_abandon ) {
 		rs->sr_err = SLAPD_ABANDON;
+		dopause = 0;
 		goto out;
 	}
 	if ( slap_pause_server() < 0 )
 		dopause = 0;
+	if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
+		goto unpause;
+	}
 
 	ldap_pvt_thread_rdwr_wlock( &cfb->cb_rwlock );
 
@@ -6011,6 +6028,8 @@ config_back_add( Operation *op, SlapReply *rs )
 
 out2:;
 	ldap_pvt_thread_rdwr_wunlock( &cfb->cb_rwlock );
+
+unpause:;
 	if ( dopause )
 		slap_unpause_server();
 
@@ -6450,7 +6469,7 @@ config_back_modify( Operation *op, SlapReply *rs )
 
 	cfb = (CfBackInfo *)op->o_bd->be_private;
 
-	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last );
+	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last, op );
 	if ( !ce ) {
 		if ( last )
 			rs->sr_matched = last->ce_entry->e_name.bv_val;
@@ -6490,12 +6509,21 @@ config_back_modify( Operation *op, SlapReply *rs )
 	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
 	if ( do_pause ) {
+		/*
+		 * ITS#10045 Pre-check for abandon but be willing to handle that the
+		 * operation might be abandoned while waiting for the server to pause.
+		 */
 		if ( op->o_abandon ) {
 			rs->sr_err = SLAPD_ABANDON;
+			do_pause = 0;
 			goto out;
 		}
 		if ( slap_pause_server() < 0 )
 			do_pause = 0;
+		if ( op->o_abandon ) {
+			rs->sr_err = SLAPD_ABANDON;
+			goto unpause;
+		}
 	}
 	ldap_pvt_thread_rdwr_wlock( &cfb->cb_rwlock );
 
@@ -6530,6 +6558,7 @@ config_back_modify( Operation *op, SlapReply *rs )
 	}
 
 	ldap_pvt_thread_rdwr_wunlock( &cfb->cb_rwlock );
+unpause:;
 	if ( do_pause )
 		slap_unpause_server();
 out:
@@ -6548,7 +6577,7 @@ config_back_modrdn( Operation *op, SlapReply *rs )
 
 	cfb = (CfBackInfo *)op->o_bd->be_private;
 
-	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last );
+	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last, op );
 	if ( !ce ) {
 		if ( last )
 			rs->sr_matched = last->ce_entry->e_name.bv_val;
@@ -6662,12 +6691,21 @@ config_back_modrdn( Operation *op, SlapReply *rs )
 		goto out;
 	}
 
+	/*
+	 * ITS#10045 Pre-check for abandon but be willing to handle that the
+	 * operation might be abandoned while waiting for the server to pause.
+	 */
 	if ( op->o_abandon ) {
 		rs->sr_err = SLAPD_ABANDON;
+		dopause = 0;
 		goto out;
 	}
 	if ( slap_pause_server() < 0 )
 		dopause = 0;
+	if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
+		goto unpause;
+	}
 
 	ldap_pvt_thread_rdwr_wlock( &cfb->cb_rwlock );
 
@@ -6737,6 +6775,7 @@ config_back_modrdn( Operation *op, SlapReply *rs )
 
 	ldap_pvt_thread_rdwr_wunlock( &cfb->cb_rwlock );
 
+unpause:
 	if ( dopause )
 		slap_unpause_server();
 out:
@@ -6754,7 +6793,7 @@ config_back_delete( Operation *op, SlapReply *rs )
 
 	cfb = (CfBackInfo *)op->o_bd->be_private;
 
-	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last );
+	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last, op );
 	if ( !ce ) {
 		if ( last )
 			rs->sr_matched = last->ce_entry->e_name.bv_val;
@@ -6773,6 +6812,11 @@ config_back_delete( Operation *op, SlapReply *rs )
 			dopause = 0;
 
 		ldap_pvt_thread_rdwr_wlock( &cfb->cb_rwlock );
+
+		if ( op->o_abandon ) {
+			rs->sr_err = SLAPD_ABANDON;
+			goto out2;
+		}
 
 		if ( ce->ce_type == Cft_Overlay ){
 			overlay_remove( ce->ce_be, (slap_overinst *)ce->ce_bi, op );
@@ -6902,7 +6946,7 @@ config_back_search( Operation *op, SlapReply *rs )
 	cfb = (CfBackInfo *)op->o_bd->be_private;
 
 	ldap_pvt_thread_rdwr_rlock( &cfb->cb_rwlock );
-	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last );
+	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last, op );
 	if ( !ce ) {
 		if ( last )
 			rs->sr_matched = last->ce_entry->e_name.bv_val;
@@ -6941,7 +6985,6 @@ out:
 	return rs->sr_err;
 }
 
-/* no-op, we never free entries */
 int config_entry_release(
 	Operation *op,
 	Entry *e,
@@ -6961,6 +7004,8 @@ int config_entry_release(
 		} else {
 			entry_free( e );
 		}
+	} else {
+		entry_free( e );
 	}
 	return rc;
 }
@@ -6977,21 +7022,34 @@ int config_back_entry_get(
 {
 	CfBackInfo *cfb;
 	CfEntryInfo *ce, *last;
-	int rc = LDAP_NO_SUCH_OBJECT;
+	Entry *e = NULL;
+	int paused = 0, rc = LDAP_NO_SUCH_OBJECT;
 
 	cfb = (CfBackInfo *)op->o_bd->be_private;
 
-	ce = config_find_base( cfb->cb_root, ndn, &last );
+	if ( ldap_pvt_thread_pool_query( &connection_pool,
+			LDAP_PVT_THREAD_POOL_PARAM_PAUSED, &paused ) ) {
+		return -1;
+	}
+	if ( !paused ) {
+		ldap_pvt_thread_rdwr_rlock( &cfb->cb_rwlock );
+	}
+	ce = config_find_base( cfb->cb_root, ndn, &last, op );
 	if ( ce ) {
-		*ent = ce->ce_entry;
-		if ( *ent ) {
+		e = ce->ce_entry;
+		if ( e ) {
 			rc = LDAP_SUCCESS;
-			if ( oc && !is_entry_objectclass_or_sub( *ent, oc ) ) {
+			if ( oc && !is_entry_objectclass_or_sub( e, oc ) ) {
 				rc = LDAP_NO_SUCH_ATTRIBUTE;
-				*ent = NULL;
+				e = NULL;
 			}
 		}
 	}
+	if ( e ) {
+		*ent = entry_dup( e );
+	}
+	if ( !paused )
+		ldap_pvt_thread_rdwr_runlock( &cfb->cb_rwlock );
 
 	return rc;
 }
@@ -7282,7 +7340,7 @@ config_check_schema(Operation *op, CfBackInfo *cfb)
 		return 0;
 
 	/* Make sure the main schema entry exists */
-	ce = config_find_base( cfb->cb_root, &schema_dn, &last );
+	ce = config_find_base( cfb->cb_root, &schema_dn, &last, op );
 	if ( ce ) {
 		Attribute *a;
 		struct berval *bv;
@@ -7397,7 +7455,12 @@ config_back_db_open( BackendDB *be, ConfigReply *cr )
 	 */
 	save_access = be->bd_self->be_acl;
 	be->bd_self->be_acl = NULL;
-	parse_acl(be->bd_self, "config_back_db_open", 0, 6, (char **)defacl, 0 );
+	c.be = be->bd_self;
+	c.fname = "config_back_db_open";
+	c.lineno = 0;
+	c.argc = 6;
+	c.argv = (char **)defacl;
+	parse_acl( &c, 0 );
 	defacl_parsed = be->bd_self->be_acl;
 	if ( save_access ) {
 		be->bd_self->be_acl = save_access;
@@ -7979,7 +8042,7 @@ config_tool_entry_modify( BackendDB *be, Entry *e, struct berval *text )
 	BackendInfo *bi = cfb->cb_db.bd_info;
 	CfEntryInfo *ce, *last;
 
-	ce = config_find_base( cfb->cb_root, &e->e_nname, &last );
+	ce = config_find_base( cfb->cb_root, &e->e_nname, &last, NULL );
 
 	if ( ce && bi && bi->bi_tool_entry_modify )
 		return bi->bi_tool_entry_modify( &cfb->cb_db, e, text );
@@ -7994,7 +8057,7 @@ config_tool_entry_delete( BackendDB *be, struct berval *ndn, struct berval *text
 	BackendInfo *bi = cfb->cb_db.bd_info;
 	CfEntryInfo *ce, *last;
 
-	ce = config_find_base( cfb->cb_root, ndn, &last );
+	ce = config_find_base( cfb->cb_root, ndn, &last, NULL );
 
 	if ( ce && bi && bi->bi_tool_entry_delete )
 		return bi->bi_tool_entry_delete( &cfb->cb_db, ndn, text );

@@ -1660,7 +1660,7 @@ void* asyncmeta_timeout_loop(void *ctx, void *arg)
 	LDAP_STAILQ_HEAD(BCList, bm_context_t) timeout_list;
 	LDAP_STAILQ_INIT( &timeout_list );
 
-	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] start at [%ld] \n", rtask, current_time );
+	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] start at [%lld] \n", rtask, (long long)current_time );
 	void *oldctx = slap_sl_mem_create(SLAP_SLAB_SIZE, SLAP_SLAB_STACK, ctx, 0);
 	for (i=0; i<mi->mi_num_conns; i++) {
 		a_metaconn_t * mc= &mi->mi_conns[i];
@@ -1751,9 +1751,9 @@ void* asyncmeta_timeout_loop(void *ctx, void *arg)
 				a_metasingleconn_t *log_msc =  &mc->mc_conns[0];
 				Debug( asyncmeta_debug,
 				       "asyncmeta_timeout_loop:Timeout op %s loop[%p], "
-				       "current_time:%ld, op->o_time:%ld msc: %p, "
+				       "current_time:%lld, op->o_time:%lld msc: %p, "
 				       "msc->msc_binding_time: %x, msc->msc_flags:%x \n",
-				       bc->op->o_log_prefix, rtask, current_time, bc->op->o_time,
+				       bc->op->o_log_prefix, rtask, (long long)current_time, (long long)bc->op->o_time,
 				       log_msc, (unsigned int)log_msc->msc_binding_time, log_msc->msc_mscflags );
 
 				if (bc->searchtime) {
@@ -1814,7 +1814,7 @@ void* asyncmeta_timeout_loop(void *ctx, void *arg)
 
 	slap_sl_mem_setctx(ctx, oldctx);
 	current_time = slap_get_time();
-	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] stop at [%ld] \n", rtask, current_time );
+	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] stop at [%lld] \n", rtask, (long long)current_time );
 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 	if ( ldap_pvt_runqueue_isrunning( &slapd_rq, rtask )) {
 		ldap_pvt_runqueue_stoptask( &slapd_rq, rtask );

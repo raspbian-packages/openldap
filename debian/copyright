@@ -35,6 +35,7 @@ Comment:
  Additional information about OpenLDAP can be obtained at
  <http://www.openldap.org/>.
 Files-Excluded: doc/drafts/*
+                doc/guide/admin/guide.html
                 doc/rfc/*
                 servers/slapd/schema/collective.schema
                 servers/slapd/schema/corba.schema

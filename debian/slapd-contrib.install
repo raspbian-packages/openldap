@@ -1,3 +1,4 @@
+usr/lib/ldap/ppm.so
 usr/lib/ldap/pw-apr1.so*
 usr/lib/ldap/pw-apr1.la
 usr/lib/ldap/pw-netscape.so*

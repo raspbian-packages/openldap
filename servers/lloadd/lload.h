@@ -337,8 +337,8 @@ struct LloadConnection {
 #define CONNECTION_UNLINK_(c) \
     do { \
         if ( __atomic_exchange_n( &(c)->c_live, 0, __ATOMIC_ACQ_REL ) ) { \
-            RELEASE_REF( (c), c_refcnt, c->c_destroy ); \
             (c)->c_unlink( (c) ); \
+            RELEASE_REF( (c), c_refcnt, c->c_destroy ); \
         } \
     } while (0)
 #define CONNECTION_DESTROY(c) \
@@ -431,11 +431,15 @@ enum op_result {
 /*
  * Operation reference tracking:
  * - o_refcnt is set to 1, never incremented
- * - operation_unlink sets it to 0 and on transition from 1 clears both
+ * - OPERATION_UNLINK sets it to 0 and on transition from 1 clears both
  *   connection links (o_client, o_upstream)
  */
 struct LloadOperation {
     uintptr_t o_refcnt;
+#define OPERATION_UNLINK(op) \
+    try_release_ref( &(op)->o_refcnt, (op), \
+            (dispose_cb *)operation_unlink, \
+            (dispose_cb *)operation_destroy )
 
     LloadConnection *o_client;
     unsigned long o_client_connid;

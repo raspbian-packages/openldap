@@ -45,6 +45,7 @@
 #include <krb5.h>
 #include <kadm5/admin.h>
 #include <hdb.h>
+#include <kadm5/private.h>
 
 #ifndef HDB_INTERFACE_VERSION
 #define	HDB_MASTER_KEY_SET	master_key_set
@@ -512,7 +513,7 @@ static int smbk5pwd_exop_passwd(
 		keys[0].bv_val = ch_malloc( LDAP_PVT_INTTYPE_CHARS(long) );
 		keys[0].bv_len = snprintf(keys[0].bv_val,
 			LDAP_PVT_INTTYPE_CHARS(long),
-			"%ld", slap_get_time());
+			"%lld", (long long)slap_get_time());
 		BER_BVZERO( &keys[1] );
 		
 		ml->sml_desc = ad_sambaPwdLastSet;
@@ -534,7 +535,7 @@ static int smbk5pwd_exop_passwd(
 			keys[0].bv_val = ch_malloc( LDAP_PVT_INTTYPE_CHARS(long) );
 			keys[0].bv_len = snprintf(keys[0].bv_val,
 					LDAP_PVT_INTTYPE_CHARS(long),
-					"%ld", slap_get_time() + pi->smb_must_change);
+					"%lld", (long long)(slap_get_time() + pi->smb_must_change));
 			BER_BVZERO( &keys[1] );
 
 			ml->sml_desc = ad_sambaPwdMustChange;
@@ -557,7 +558,7 @@ static int smbk5pwd_exop_passwd(
 			keys[0].bv_val = ch_malloc( LDAP_PVT_INTTYPE_CHARS(long) );
 			keys[0].bv_len = snprintf(keys[0].bv_val,
 					LDAP_PVT_INTTYPE_CHARS(long),
-					"%ld", slap_get_time() + pi->smb_can_change);
+					"%lld", (long long)(slap_get_time() + pi->smb_can_change));
 			BER_BVZERO( &keys[1] );
 
 			ml->sml_desc = ad_sambaPwdCanChange;

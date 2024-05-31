@@ -1,0 +1,12 @@
+Description: Fix implicit declaration of kadm5_s_init_with_password_ctx
+Bug-Debian: https://bugs.debian.org/1065633
+--- a/contrib/slapd-modules/smbk5pwd/smbk5pwd.c
++++ b/contrib/slapd-modules/smbk5pwd/smbk5pwd.c
+@@ -45,6 +45,7 @@
+ #include <krb5.h>
+ #include <kadm5/admin.h>
+ #include <hdb.h>
++#include <kadm5/private.h>
+ 
+ #ifndef HDB_INTERFACE_VERSION
+ #define	HDB_MASTER_KEY_SET	master_key_set
