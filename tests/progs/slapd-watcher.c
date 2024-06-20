@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2022 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -537,7 +537,6 @@ setup_server( struct tester_conn_args *config, server *sv, int first )
 						}
 					}
 				}
-				ldap_msgfree( res );
 				break;
 
 			default:
@@ -545,6 +544,7 @@ setup_server( struct tester_conn_args *config, server *sv, int first )
 				if ( first )
 					exit( EXIT_FAILURE );
 			}
+			ldap_msgfree( res );
 		}
 	}
 

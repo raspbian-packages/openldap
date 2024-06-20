@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2022 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -2991,14 +2991,14 @@ ldap_back_conn2str( const ldapconn_base_t *lc, char *buf, ber_len_t buflen )
 	}
 
 	if ( lc->lcb_create_time != 0 ) {
-		len = snprintf( tbuf, sizeof(tbuf), "%ld", lc->lcb_create_time );
+		len = snprintf( tbuf, sizeof(tbuf), "%lld", (long long)lc->lcb_create_time );
 		if ( ptr + sizeof(" created=") + len >= end ) return -1;
 		ptr = lutil_strcopy( ptr, " created=" );
 		ptr = lutil_strcopy( ptr, tbuf );
 	}
 
 	if ( lc->lcb_time != 0 ) {
-		len = snprintf( tbuf, sizeof(tbuf), "%ld", lc->lcb_time );
+		len = snprintf( tbuf, sizeof(tbuf), "%lld", (long long)lc->lcb_time );
 		if ( ptr + sizeof(" modified=") + len >= end ) return -1;
 		ptr = lutil_strcopy( ptr, " modified=" );
 		ptr = lutil_strcopy( ptr, tbuf );
@@ -3159,8 +3159,8 @@ ldap_back_conn_prune( ldapinfo_t *li )
 		 */
 		slap_wake_listener();
 		Debug( LDAP_DEBUG_TRACE,
-			"ldap_back_conn_prune: scheduled connection expiry timer to %ld sec\n",
-			li->li_conn_expire_task->interval.tv_sec );
+			"ldap_back_conn_prune: scheduled connection expiry timer to %lld sec\n",
+ 			(long long)li->li_conn_expire_task->interval.tv_sec );
 	} else if ( next_timeout == -1 && li->li_conn_expire_task != NULL ) {
 		if ( ldap_pvt_runqueue_isrunning( &slapd_rq, li->li_conn_expire_task ) ) {
 			ldap_pvt_runqueue_stoptask( &slapd_rq, li->li_conn_expire_task );
@@ -3195,8 +3195,8 @@ ldap_back_schedule_conn_expiry( ldapinfo_t *li, ldapconn_t *lc ) {
 			"ldap_back_conn_expire_timer" );
 		slap_wake_listener();
 		Debug( LDAP_DEBUG_TRACE,
-			"ldap_back_conn_prune: scheduled connection expiry timer to %ld sec\n",
-			li->li_conn_expire_task->interval.tv_sec );
+			"ldap_back_conn_prune: scheduled connection expiry timer to %lld sec\n",
+			(long long)li->li_conn_expire_task->interval.tv_sec );
 	}
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 

@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -439,7 +439,7 @@ deref_response( Operation *op, SlapReply *rs )
 						rc = ber_printf( ber, "{O[W]}",
 							&dr->dr_spec.ds_attributes[ j ]->ad_cname,
 							dr->dr_vals[ i ].dv_attrVals[ j ] );
-						op->o_tmpfree( dr->dr_vals[ i ].dv_attrVals[ j ],
+						ber_bvarray_free_x( dr->dr_vals[ i ].dv_attrVals[ j ],
 							op->o_tmpmemctx );
 					}
 				}

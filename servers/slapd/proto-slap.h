@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,9 +100,7 @@ LDAP_SLAPD_F (int) acl_string_expand LDAP_P((
  */
 LDAP_SLAPD_V (LDAP_CONST char *) style_strings[];
 
-LDAP_SLAPD_F (int) parse_acl LDAP_P(( Backend *be,
-	const char *fname, int lineno,
-	int argc, char **argv, int pos ));
+LDAP_SLAPD_F (int) parse_acl LDAP_P(( struct config_args_s *ca, int pos ));
 
 LDAP_SLAPD_F (char *) access2str LDAP_P(( slap_access_t access ));
 LDAP_SLAPD_F (slap_access_t) str2access LDAP_P(( const char *str ));
@@ -331,6 +329,9 @@ LDAP_SLAPD_F (void) ava_free LDAP_P((
 	Operation *op,
 	AttributeAssertion *ava,
 	int freeit ));
+LDAP_SLAPD_F (AttributeAssertion *) ava_dup LDAP_P((
+	AttributeAssertion *ava,
+	void *memctx ));
 
 /*
  * backend.c

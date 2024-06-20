@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ request_abandon( LloadConnection *c, LloadOperation *op )
                 "connid=%lu msgid=%d invalid integer sent in abandon request\n",
                 c->c_connid, op->o_client_msgid );
 
-        operation_unlink( op );
+        OPERATION_UNLINK(op);
         CONNECTION_LOCK_DESTROY(c);
         return -1;
     }
@@ -81,7 +81,7 @@ request_abandon( LloadConnection *c, LloadOperation *op )
     operation_abandon( request );
 
 done:
-    operation_unlink( op );
+    OPERATION_UNLINK(op);
     return rc;
 }
 
@@ -201,7 +201,7 @@ fail:
         operation_send_reject( op, LDAP_OTHER, "internal error", 0 );
     }
 
-    operation_unlink( op );
+    OPERATION_UNLINK(op);
     if ( rc ) {
         CONNECTION_LOCK_DESTROY(client);
     }
@@ -250,7 +250,7 @@ handle_one_request( LloadConnection *c )
         case LDAP_REQ_UNBIND:
             /* There is never a response for this operation */
             op->o_res = LLOAD_OP_COMPLETED;
-            operation_unlink( op );
+            OPERATION_UNLINK(op);
 
             Debug( LDAP_DEBUG_STATS, "handle_one_request: "
                     "received unbind, closing client connid=%lu\n",

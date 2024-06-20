@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -767,6 +767,12 @@ ldap_pvt_thread_pool_query(
 			else
 				*((char **)value) = "stopping";
 		}
+		break;
+
+	case LDAP_PVT_THREAD_POOL_PARAM_PAUSED:
+		ldap_pvt_thread_mutex_lock(&pool->ltp_mutex);
+		count = (pool->ltp_pause == PAUSED);
+		ldap_pvt_thread_mutex_unlock(&pool->ltp_mutex);
 		break;
 
 	case LDAP_PVT_THREAD_POOL_PARAM_UNKNOWN:

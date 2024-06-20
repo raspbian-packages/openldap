@@ -1,5 +1,5 @@
 .TH SLAPD-ASYNCMETA 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2016-2022 The OpenLDAP Foundation.
+.\" Copyright 2016-2024 The OpenLDAP Foundation.
 .\" Portions Copyright 2016 Symas Corporation.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
@@ -54,8 +54,7 @@ works with a configured maximum number of connections per target.
 For each request redirected to a target, a different connection is selected.
 Each connection has a queue, to which the request is added before it is sent to the
 remote server, and is removed after the last response for that request is received.
- For each new request, the connection with the smallest number of pending requests
-is selected, or using round\-robin if the numbers are equal.
+ For each new request, a new connection is chosen using round\-robin scheduling.
 .LP
 .B Overlays:
 .LP
@@ -403,15 +402,6 @@ before any target specification, it applies to all targets (by default,
 times);
 the global value can be overridden by redefinitions inside each target
 specification.
-
-.TP
-.B rewrite* ...
-The rewrite options are identical to the
-.B meta
-backend. See the
-.B REWRITING
-section of
-.B slapd\-meta(5).
 
 .TP
 .B subtree\-{exclude|include} "<rule>"

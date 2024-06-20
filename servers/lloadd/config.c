@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -613,7 +613,7 @@ static ConfigTable config_back_cf_table[] = {
         &config_generic,
         "( OLcfgBkAt:13.26 "
             "NAME 'olcBkLloadIOTimeout' "
-            "DESC 'I/O timeout threshold in miliseconds' "
+            "DESC 'I/O timeout threshold in milliseconds' "
             "EQUALITY integerMatch "
             "SYNTAX OMsInteger "
             "SINGLE-VALUE )",

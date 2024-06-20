@@ -1,0 +1,393 @@
+Description: handle sizeof(time_t) > sizeof(long) in format strings
+ 64-bit time_t means that on some architectures, time_t is now larger than
+ a long, and making some references in format strings incorrect.  To avoid
+ truncation or other size mismatch issues, always cast to a long long and
+ read using %lld.
+ .
+ Fixes an assertion failure detected during build-time tests on armhf:
+ slapd: ../../../../../servers/slapd/overlays/dds.c:422: dds_op_add: Assertion `bv.bv_len < sizeof( ttlbuf )' failed.
+Author: Steve Langasek <steve.langasek@canonical.com>
+Last-Update: 2024-03-11
+Forwarded: no
+
+Index: openldap/libraries/libldap/os-ip.c
+===================================================================
+--- openldap.orig/libraries/libldap/os-ip.c
++++ openldap/libraries/libldap/os-ip.c
+@@ -287,8 +287,8 @@
+ 	int		rc;
+ 		
+ 
+-	Debug2(LDAP_DEBUG_TRACE, "ldap_int_poll: fd: %d tm: %ld\n",
+-		s, tvp ? tvp->tv_sec : -1L );
++	Debug2(LDAP_DEBUG_TRACE, "ldap_int_poll: fd: %d tm: %lld\n",
++		s, (long long)(tvp ? tvp->tv_sec : -1L) );
+ 
+ #ifdef HAVE_POLL
+ 	{
+@@ -439,8 +439,8 @@
+ 	}
+ 
+ 	Debug3(LDAP_DEBUG_TRACE,
+-			"ldap_pvt_connect: fd: %d tm: %ld async: %d\n",
+-			s, opt_tv ? tv.tv_sec : -1L, async);
++			"ldap_pvt_connect: fd: %d tm: %lld async: %d\n",
++			s, (long long)(opt_tv ? tv.tv_sec : -1L), async);
+ 
+ 	if ( opt_tv && ldap_pvt_ndelay_on(ld, s) == -1 )
+ 		return ( -1 );
+Index: openldap/libraries/libldap/os-local.c
+===================================================================
+--- openldap.orig/libraries/libldap/os-local.c
++++ openldap/libraries/libldap/os-local.c
+@@ -164,8 +164,8 @@
+ 	}
+ 
+ 	Debug3(LDAP_DEBUG_TRACE,
+-		"ldap_connect_timeout: fd: %d tm: %ld async: %d\n",
+-		s, opt_tv ? tv.tv_sec : -1L, async);
++		"ldap_connect_timeout: fd: %d tm: %lld async: %d\n",
++		s, (long long)(opt_tv ? tv.tv_sec : -1L), async);
+ 
+ 	if ( ldap_pvt_ndelay_on(ld, s) == -1 ) return -1;
+ 
+Index: openldap/libraries/libldap/result.c
+===================================================================
+--- openldap.orig/libraries/libldap/result.c
++++ openldap/libraries/libldap/result.c
+@@ -264,8 +264,8 @@
+ 		Debug2( LDAP_DEBUG_TRACE, "wait4msg ld %p msgid %d (infinite timeout)\n",
+ 			(void *)ld, msgid );
+ 	} else {
+-		Debug3( LDAP_DEBUG_TRACE, "wait4msg ld %p msgid %d (timeout %ld usec)\n",
+-			(void *)ld, msgid, (long)timeout->tv_sec * 1000000 + timeout->tv_usec );
++		Debug3( LDAP_DEBUG_TRACE, "wait4msg ld %p msgid %d (timeout %lld usec)\n",
++			(void *)ld, msgid, (long long)((long long)timeout->tv_sec * 1000000 + timeout->tv_usec) );
+ 	}
+ #endif /* LDAP_DEBUG */
+ 
+Index: openldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c
+===================================================================
+--- openldap.orig/contrib/slapd-modules/smbk5pwd/smbk5pwd.c
++++ openldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c
+@@ -513,7 +513,7 @@
+ 		keys[0].bv_val = ch_malloc( LDAP_PVT_INTTYPE_CHARS(long) );
+ 		keys[0].bv_len = snprintf(keys[0].bv_val,
+ 			LDAP_PVT_INTTYPE_CHARS(long),
+-			"%ld", slap_get_time());
++			"%lld", (long long)slap_get_time());
+ 		BER_BVZERO( &keys[1] );
+ 		
+ 		ml->sml_desc = ad_sambaPwdLastSet;
+@@ -535,7 +535,7 @@
+ 			keys[0].bv_val = ch_malloc( LDAP_PVT_INTTYPE_CHARS(long) );
+ 			keys[0].bv_len = snprintf(keys[0].bv_val,
+ 					LDAP_PVT_INTTYPE_CHARS(long),
+-					"%ld", slap_get_time() + pi->smb_must_change);
++					"%lld", (long long)(slap_get_time() + pi->smb_must_change));
+ 			BER_BVZERO( &keys[1] );
+ 
+ 			ml->sml_desc = ad_sambaPwdMustChange;
+@@ -558,7 +558,7 @@
+ 			keys[0].bv_val = ch_malloc( LDAP_PVT_INTTYPE_CHARS(long) );
+ 			keys[0].bv_len = snprintf(keys[0].bv_val,
+ 					LDAP_PVT_INTTYPE_CHARS(long),
+-					"%ld", slap_get_time() + pi->smb_can_change);
++					"%lld", (long long)(slap_get_time() + pi->smb_can_change));
+ 			BER_BVZERO( &keys[1] );
+ 
+ 			ml->sml_desc = ad_sambaPwdCanChange;
+Index: openldap/servers/slapd/back-asyncmeta/add.c
+===================================================================
+--- openldap.orig/servers/slapd/back-asyncmeta/add.c
++++ openldap/servers/slapd/back-asyncmeta/add.c
+@@ -252,8 +252,8 @@
+ 	      op->o_req_dn.bv_val );
+ 
+ 	if (current_time > op->o_time) {
+-		Debug(asyncmeta_debug, "==> asyncmeta_back_add[%s]: o_time:[%ld], current time: [%ld]\n",
+-		      op->o_log_prefix, op->o_time, current_time );
++		Debug(asyncmeta_debug, "==> asyncmeta_back_add[%s]: o_time:[%lld], current time: [%lld]\n",
++		      op->o_log_prefix, (long long)op->o_time, (long long)current_time );
+ 	}
+ 
+ 	asyncmeta_new_bm_context(op, rs, &bc, mi->mi_ntargets, mi );
+Index: openldap/servers/slapd/back-asyncmeta/compare.c
+===================================================================
+--- openldap.orig/servers/slapd/back-asyncmeta/compare.c
++++ openldap/servers/slapd/back-asyncmeta/compare.c
+@@ -194,8 +194,8 @@
+ 	      op->o_req_dn.bv_val );
+ 
+ 	if (current_time > op->o_time) {
+-		Debug( asyncmeta_debug, "==> asyncmeta_back_compare[%s]: o_time:[%ld], current time: [%ld]\n",
+-		       op->o_log_prefix, op->o_time, current_time );
++		Debug( asyncmeta_debug, "==> asyncmeta_back_compare[%s]: o_time:[%lld], current time: [%lld]\n",
++		       op->o_log_prefix, (long long)op->o_time, (long long)current_time );
+ 	}
+ 	asyncmeta_new_bm_context(op, rs, &bc, mi->mi_ntargets, mi );
+ 	if (bc == NULL) {
+Index: openldap/servers/slapd/back-asyncmeta/config.c
+===================================================================
+--- openldap.orig/servers/slapd/back-asyncmeta/config.c
++++ openldap/servers/slapd/back-asyncmeta/config.c
+@@ -1133,8 +1133,8 @@
+ 			if ( mc->mc_network_timeout == 0 ) {
+ 				return 1;
+ 			}
+-			bv.bv_len = snprintf( c->cr_msg, sizeof(c->cr_msg), "%ld",
+-				mc->mc_network_timeout );
++			bv.bv_len = snprintf( c->cr_msg, sizeof(c->cr_msg), "%lld",
++				(long long)mc->mc_network_timeout );
+ 			bv.bv_val = c->cr_msg;
+ 			value_add_one( &c->rvalue_vals, &bv );
+ 			break;
+Index: openldap/servers/slapd/back-asyncmeta/delete.c
+===================================================================
+--- openldap.orig/servers/slapd/back-asyncmeta/delete.c
++++ openldap/servers/slapd/back-asyncmeta/delete.c
+@@ -186,8 +186,8 @@
+ 	      op->o_req_dn.bv_val );
+ 
+ 	if (current_time > op->o_time) {
+-		Debug(asyncmeta_debug, "==> asyncmeta_back_delete[%s]: o_time:[%ld], current time: [%ld]\n",
+-		      op->o_log_prefix, op->o_time, current_time );
++		Debug(asyncmeta_debug, "==> asyncmeta_back_delete[%s]: o_time:[%lld], current time: [%lld]\n",
++		      op->o_log_prefix, (long long)op->o_time, (long long)current_time );
+ 	}
+ 
+ 	asyncmeta_new_bm_context(op, rs, &bc, mi->mi_ntargets, mi );
+Index: openldap/servers/slapd/back-asyncmeta/meta_result.c
+===================================================================
+--- openldap.orig/servers/slapd/back-asyncmeta/meta_result.c
++++ openldap/servers/slapd/back-asyncmeta/meta_result.c
+@@ -1660,7 +1660,7 @@
+ 	LDAP_STAILQ_HEAD(BCList, bm_context_t) timeout_list;
+ 	LDAP_STAILQ_INIT( &timeout_list );
+ 
+-	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] start at [%ld] \n", rtask, current_time );
++	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] start at [%lld] \n", rtask, (long long)current_time );
+ 	void *oldctx = slap_sl_mem_create(SLAP_SLAB_SIZE, SLAP_SLAB_STACK, ctx, 0);
+ 	for (i=0; i<mi->mi_num_conns; i++) {
+ 		a_metaconn_t * mc= &mi->mi_conns[i];
+@@ -1751,9 +1751,9 @@
+ 				a_metasingleconn_t *log_msc =  &mc->mc_conns[0];
+ 				Debug( asyncmeta_debug,
+ 				       "asyncmeta_timeout_loop:Timeout op %s loop[%p], "
+-				       "current_time:%ld, op->o_time:%ld msc: %p, "
++				       "current_time:%lld, op->o_time:%lld msc: %p, "
+ 				       "msc->msc_binding_time: %x, msc->msc_flags:%x \n",
+-				       bc->op->o_log_prefix, rtask, current_time, bc->op->o_time,
++				       bc->op->o_log_prefix, rtask, (long long)current_time, (long long)bc->op->o_time,
+ 				       log_msc, (unsigned int)log_msc->msc_binding_time, log_msc->msc_mscflags );
+ 
+ 				if (bc->searchtime) {
+@@ -1814,7 +1814,7 @@
+ 
+ 	slap_sl_mem_setctx(ctx, oldctx);
+ 	current_time = slap_get_time();
+-	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] stop at [%ld] \n", rtask, current_time );
++	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] stop at [%lld] \n", rtask, (long long)current_time );
+ 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
+ 	if ( ldap_pvt_runqueue_isrunning( &slapd_rq, rtask )) {
+ 		ldap_pvt_runqueue_stoptask( &slapd_rq, rtask );
+Index: openldap/servers/slapd/back-asyncmeta/modify.c
+===================================================================
+--- openldap.orig/servers/slapd/back-asyncmeta/modify.c
++++ openldap/servers/slapd/back-asyncmeta/modify.c
+@@ -242,8 +242,8 @@
+ 	      op->o_req_dn.bv_val );
+ 
+ 	if (current_time > op->o_time) {
+-		Debug(asyncmeta_debug, "==> asyncmeta_back_modify[%s]: o_time:[%ld], current time: [%ld]\n",
+-		      op->o_log_prefix, op->o_time, current_time );
++		Debug(asyncmeta_debug, "==> asyncmeta_back_modify[%s]: o_time:[%lld], current time: [%lld]\n",
++		      op->o_log_prefix, (long long)op->o_time, (long long)current_time );
+ 	}
+ 
+ 	asyncmeta_new_bm_context(op, rs, &bc, mi->mi_ntargets, mi );
+Index: openldap/servers/slapd/back-asyncmeta/modrdn.c
+===================================================================
+--- openldap.orig/servers/slapd/back-asyncmeta/modrdn.c
++++ openldap/servers/slapd/back-asyncmeta/modrdn.c
+@@ -256,8 +256,8 @@
+ 	      op->o_req_dn.bv_val );
+ 
+ 	if (current_time > op->o_time) {
+-		Debug(asyncmeta_debug, "==> asyncmeta_back_modrdn[%s]: o_time:[%ld], current time: [%ld]\n",
+-		      op->o_log_prefix, op->o_time, current_time );
++		Debug(asyncmeta_debug, "==> asyncmeta_back_modrdn[%s]: o_time:[%lld], current time: [%lld]\n",
++		      op->o_log_prefix, (long long)op->o_time, (long long)current_time );
+ 	}
+ 	asyncmeta_new_bm_context(op, rs, &bc, mi->mi_ntargets, mi );
+ 	if (bc == NULL) {
+Index: openldap/servers/slapd/back-ldap/bind.c
+===================================================================
+--- openldap.orig/servers/slapd/back-ldap/bind.c
++++ openldap/servers/slapd/back-ldap/bind.c
+@@ -2991,14 +2991,14 @@
+ 	}
+ 
+ 	if ( lc->lcb_create_time != 0 ) {
+-		len = snprintf( tbuf, sizeof(tbuf), "%ld", lc->lcb_create_time );
++		len = snprintf( tbuf, sizeof(tbuf), "%lld", (long long)lc->lcb_create_time );
+ 		if ( ptr + sizeof(" created=") + len >= end ) return -1;
+ 		ptr = lutil_strcopy( ptr, " created=" );
+ 		ptr = lutil_strcopy( ptr, tbuf );
+ 	}
+ 
+ 	if ( lc->lcb_time != 0 ) {
+-		len = snprintf( tbuf, sizeof(tbuf), "%ld", lc->lcb_time );
++		len = snprintf( tbuf, sizeof(tbuf), "%lld", (long long)lc->lcb_time );
+ 		if ( ptr + sizeof(" modified=") + len >= end ) return -1;
+ 		ptr = lutil_strcopy( ptr, " modified=" );
+ 		ptr = lutil_strcopy( ptr, tbuf );
+@@ -3159,8 +3159,8 @@
+ 		 */
+ 		slap_wake_listener();
+ 		Debug( LDAP_DEBUG_TRACE,
+-			"ldap_back_conn_prune: scheduled connection expiry timer to %ld sec\n",
+-			li->li_conn_expire_task->interval.tv_sec );
++			"ldap_back_conn_prune: scheduled connection expiry timer to %lld sec\n",
++ 			(long long)li->li_conn_expire_task->interval.tv_sec );
+ 	} else if ( next_timeout == -1 && li->li_conn_expire_task != NULL ) {
+ 		if ( ldap_pvt_runqueue_isrunning( &slapd_rq, li->li_conn_expire_task ) ) {
+ 			ldap_pvt_runqueue_stoptask( &slapd_rq, li->li_conn_expire_task );
+@@ -3195,10 +3195,10 @@
+ 			"ldap_back_conn_expire_timer" );
+ 		slap_wake_listener();
+ 		Debug( LDAP_DEBUG_TRACE,
+-			"ldap_back_conn_prune: scheduled connection expiry timer to %ld sec\n",
+-			li->li_conn_expire_task->interval.tv_sec );
++			"ldap_back_conn_prune: scheduled connection expiry timer to %lld sec\n",
++			(long long)li->li_conn_expire_task->interval.tv_sec );
+ 	}
+ 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
+ 
+ 	return;
+-}
+\ No newline at end of file
++}
+Index: openldap/servers/slapd/bind.c
+===================================================================
+--- openldap.orig/servers/slapd/bind.c
++++ openldap/servers/slapd/bind.c
+@@ -430,8 +430,8 @@
+ 			bindtime = tt.tt_sec;
+ 		}
+ 		Debug( LDAP_DEBUG_TRACE, "fe_op_lastbind: "
+-				"old pwdLastSuccess value=%s %lds ago\n",
+-				a->a_nvals[0].bv_val, bindtime == (time_t)-1 ? -1 : op->o_time - bindtime );
++				"old pwdLastSuccess value=%s %llds ago\n",
++				a->a_nvals[0].bv_val, (long long)(bindtime == (time_t)-1 ? -1 : op->o_time - bindtime) );
+ 
+ 		/*
+ 		 * TODO: If the recorded bind time is within configurable precision,
+Index: openldap/servers/slapd/overlays/dds.c
+===================================================================
+--- openldap.orig/servers/slapd/overlays/dds.c
++++ openldap/servers/slapd/overlays/dds.c
+@@ -418,7 +418,7 @@
+ 		assert( ttl <= DDS_RF2589_MAX_TTL );
+ 
+ 		bv.bv_val = ttlbuf;
+-		bv.bv_len = snprintf( ttlbuf, sizeof( ttlbuf ), "%ld", ttl );
++		bv.bv_len = snprintf( ttlbuf, sizeof( ttlbuf ), "%lld", (long long)ttl );
+ 		assert( bv.bv_len < sizeof( ttlbuf ) );
+ 
+ 		/* FIXME: apparently, values in op->ora_e are malloc'ed
+@@ -696,7 +696,7 @@
+ 					goto done;
+ 				}
+ 
+-				bv_entryTtl.bv_len = snprintf( textbuf, sizeof( textbuf ), "%ld", entryTtl );
++				bv_entryTtl.bv_len = snprintf( textbuf, sizeof( textbuf ), "%lld", (long long)entryTtl );
+ 				break;
+ 
+ 			default:
+@@ -918,7 +918,7 @@
+ 		ttl = (ttl < 0) ? 0 : ttl;
+ 		assert( ttl <= DDS_RF2589_MAX_TTL );
+ 
+-		len = snprintf( ttlbuf, sizeof(ttlbuf), "%ld", ttl );
++		len = snprintf( ttlbuf, sizeof(ttlbuf), "%lld", (long long)ttl );
+ 		if ( len < 0 )
+ 		{
+ 			goto done;
+@@ -1178,7 +1178,7 @@
+ 		ttlmod.sml_values = ttlvalues;
+ 		ttlmod.sml_numvals = 1;
+ 		ttlvalues[ 0 ].bv_val = ttlbuf;
+-		ttlvalues[ 0 ].bv_len = snprintf( ttlbuf, sizeof( ttlbuf ), "%ld", ttl );
++		ttlvalues[ 0 ].bv_len = snprintf( ttlbuf, sizeof( ttlbuf ), "%lld", (long long)ttl );
+ 		BER_BVZERO( &ttlvalues[ 1 ] );
+ 
+ 		/* the entryExpireTimestamp is added by modify */
+@@ -1206,8 +1206,8 @@
+ 				rs->sr_rspoid = ch_strdup( slap_EXOP_REFRESH.bv_val );
+ 
+ 				Log( LDAP_DEBUG_TRACE, LDAP_LEVEL_INFO,
+-					"%s REFRESH dn=\"%s\" TTL=%ld\n",
+-					op->o_log_prefix, op->o_req_ndn.bv_val, ttl );
++					"%s REFRESH dn=\"%s\" TTL=%lld\n",
++					op->o_log_prefix, op->o_req_ndn.bv_val, (long long)ttl );
+ 			}
+ 
+ 			ber_free_buf( ber );
+Index: openldap/servers/slapd/overlays/pcache.c
+===================================================================
+--- openldap.orig/servers/slapd/overlays/pcache.c
++++ openldap/servers/slapd/overlays/pcache.c
+@@ -2729,8 +2729,8 @@
+ 					pbi->bi_flags |= BI_HASHED;
+ 			} else {
+ 				Debug( pcache_debug, "pc_bind_search: cache is stale, "
+-					"reftime: %ld, current time: %ld\n",
+-					pbi->bi_cq->bindref_time, op->o_time );
++					"reftime: %lld, current time: %lld\n",
++					(long long)pbi->bi_cq->bindref_time, (long long)op->o_time );
+ 			}
+ 		} else if ( pbi->bi_si ) {
+ 			/* This search result is going into the cache */
+@@ -3866,9 +3866,9 @@
+ 		struct berval bv;
+ 		switch( c->type ) {
+ 		case PC_MAIN:
+-			bv.bv_len = snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s %d %d %d %ld",
++			bv.bv_len = snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s %d %d %d %lld",
+ 				cm->db.bd_info->bi_type, cm->max_entries, cm->numattrsets,
+-				cm->num_entries_limit, cm->cc_period );
++				cm->num_entries_limit, (long long)cm->cc_period );
+ 			bv.bv_val = c->cr_msg;
+ 			value_add_one( &c->rvalue_vals, &bv );
+ 			break;
+@@ -3910,12 +3910,12 @@
+ 				/* HEADS-UP: always print all;
+ 				 * if optional == 0, ignore */
+ 				bv.bv_len = snprintf( c->cr_msg, sizeof( c->cr_msg ),
+-					" %d %ld %ld %ld %ld",
++					" %d %lld %lld %lld %lld",
+ 					temp->attr_set_index,
+-					temp->ttl,
+-					temp->negttl,
+-					temp->limitttl,
+-					temp->ttr );
++					(long long)temp->ttl,
++					(long long)temp->negttl,
++					(long long)temp->limitttl,
++					(long long)temp->ttr );
+ 				bv.bv_len += temp->querystr.bv_len + 2;
+ 				bv.bv_val = ch_malloc( bv.bv_len+1 );
+ 				ptr = bv.bv_val;
+@@ -3932,9 +3932,9 @@
+ 			for (temp=qm->templates; temp; temp=temp->qmnext) {
+ 				if ( !temp->bindttr ) continue;
+ 				bv.bv_len = snprintf( c->cr_msg, sizeof( c->cr_msg ),
+-					" %d %ld %s ",
++					" %d %lld %s ",
+ 					temp->attr_set_index,
+-					temp->bindttr,
++					(long long)temp->bindttr,
+ 					ldap_pvt_scope2str( temp->bindscope ));
+ 				bv.bv_len += temp->bindbase.bv_len + temp->bindftemp.bv_len + 4;
+ 				bv.bv_val = ch_malloc( bv.bv_len + 1 );

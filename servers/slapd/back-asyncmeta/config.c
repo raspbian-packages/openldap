@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2016-2022 The OpenLDAP Foundation.
+ * Copyright 2016-2024 The OpenLDAP Foundation.
  * Portions Copyright 2016 Symas Corporation.
  * All rights reserved.
  *
@@ -1133,8 +1133,8 @@ asyncmeta_back_cf_gen( ConfigArgs *c )
 			if ( mc->mc_network_timeout == 0 ) {
 				return 1;
 			}
-			bv.bv_len = snprintf( c->cr_msg, sizeof(c->cr_msg), "%ld",
-				mc->mc_network_timeout );
+			bv.bv_len = snprintf( c->cr_msg, sizeof(c->cr_msg), "%lld",
+				(long long)mc->mc_network_timeout );
 			bv.bv_val = c->cr_msg;
 			value_add_one( &c->rvalue_vals, &bv );
 			break;

@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2022 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -176,9 +176,9 @@ translucent_cfadd( Operation *op, SlapReply *rs, Entry *e, ConfigArgs *ca )
 
 	/* We can only create this entry if the database is table-driven
 	 */
-	if ( ov->db.bd_info->bi_cf_ocs )
+	if ( ov->db.be_cf_ocs )
 		config_build_entry( op, rs, cei, ca, &bv,
-				    ov->db.bd_info->bi_cf_ocs,
+				    ov->db.be_cf_ocs,
 				    &translucentocs[1] );
 
 	return 0;

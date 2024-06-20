@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2022 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -1617,7 +1617,8 @@ ppolicy_bind_response( Operation *op, SlapReply *rs )
 		} else if ( ppb->pp.pwdMinDelay ) {
 			int waittime = ppb->pp.pwdMinDelay << fc;
 			time_t wait_end;
-			struct berval lockout_stamp;
+			char lockout_stamp_buf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
+			struct berval lockout_stamp = BER_BVC(lockout_stamp_buf);
 
 			if ( waittime > ppb->pp.pwdMaxDelay ) {
 				waittime = ppb->pp.pwdMaxDelay;
@@ -2223,7 +2224,7 @@ ppolicy_add(
 		return rs->sr_err;
 
 	/* If this is a replica, assume the provider checked everything */
-	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) )
+	if ( be_shadow_update( op ) )
 		return SLAP_CB_CONTINUE;
 
 	ppolicy_get( op, op->ora_e, &pp );
@@ -2390,7 +2391,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 	/* If this is a replica, we may need to tweak some of the
 	 * provider's modifications. Otherwise, just pass it through.
 	 */
-	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) ) {
+	if ( be_shadow_update( op ) ) {
 		Modifications **prev;
 		Attribute *a_grace, *a_lock, *a_fail, *a_success;
 

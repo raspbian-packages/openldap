@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -538,7 +538,7 @@ slap_tool_init(
 			case SLAPSCHEMA:
 				/* dump subtree */
 				ch_free( subtree );
-				subtree = optarg;
+				subtree = ch_strdup( optarg );
 				break;
 			}
 			break;

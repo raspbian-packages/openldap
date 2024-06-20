@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -271,6 +271,17 @@ at_clean( AttributeType *a )
 		if ( mr != a->sat_equality ) {
 			ch_free( a->sat_equality );
 			a->sat_equality = NULL;
+		}
+	}
+
+	if ( a->sat_ordering ) {
+		MatchingRule	*mr;
+
+		mr = mr_find( a->sat_ordering->smr_oid );
+		assert( mr != NULL );
+		if ( mr != a->sat_ordering ) {
+			ch_free( a->sat_ordering );
+			a->sat_ordering = NULL;
 		}
 	}
 
@@ -941,11 +952,15 @@ error_return:;
 		}
 
 		if ( oidm ) {
+			if ( *err == at->at_oid )
+				*err = oidm;
 			SLAP_FREE( at->at_oid );
 			at->at_oid = oidm;
 		}
 
 		if ( soidm ) {
+			if ( *err == at->at_syntax_oid )
+				*err = soidm;
 			SLAP_FREE( at->at_syntax_oid );
 			at->at_syntax_oid = soidm;
 		}

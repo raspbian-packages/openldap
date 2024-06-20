@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2022 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -528,6 +528,7 @@ do_random( LDAP *ld,
 			if ( rc ) {
 				tester_ldap_error( ld, "ldap_search_ext_s", NULL );
 			}
+			ldap_msgfree( res );
 			break;
 		}
 
@@ -566,6 +567,7 @@ do_random( LDAP *ld,
 
 	default:
 		tester_ldap_error( ld, "ldap_search_ext_s", NULL );
+		ldap_msgfree( res );
 		break;
 	}
 

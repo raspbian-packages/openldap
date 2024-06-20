@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2022 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -1040,7 +1040,7 @@ ldap_chain_response( Operation *op, SlapReply *rs )
 
 	/* we need this to know if back-ldap returned any result */
 	lb.lb_lc = lc;
-	sc2.sc_next = sc->sc_next;
+	sc2.sc_next = sc;
 	sc2.sc_private = &lb;
 	sc2.sc_response = ldap_chain_cb_response;
 	op->o_callback = &sc2;

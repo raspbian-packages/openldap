@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -253,7 +253,8 @@ typedef enum {
 	LDAP_PVT_THREAD_POOL_PARAM_ACTIVE_MAX,
 	LDAP_PVT_THREAD_POOL_PARAM_PENDING_MAX,
 	LDAP_PVT_THREAD_POOL_PARAM_BACKLOAD_MAX,
-	LDAP_PVT_THREAD_POOL_PARAM_STATE
+	LDAP_PVT_THREAD_POOL_PARAM_STATE,
+	LDAP_PVT_THREAD_POOL_PARAM_PAUSED
 } ldap_pvt_thread_pool_param_t;
 #endif /* !LDAP_PVT_THREAD_H_DONE */
 

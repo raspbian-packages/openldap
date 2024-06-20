@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2018-2022 The OpenLDAP Foundation.
+ * Copyright 2018-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,11 @@ int acquire_ref( uintptr_t *refp );
  * @return 0 if reference was already zero, non-zero if reference
  * count was non-zero at the time of call
  */
-int try_release_ref( uintptr_t *refp, void *object, dispose_cb *cb );
+int try_release_ref(
+        uintptr_t *refp,
+        void *object,
+        dispose_cb *unlink_cb,
+        dispose_cb *destroy_cb );
 
 /** @brief Read reference count
  *

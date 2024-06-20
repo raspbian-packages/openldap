@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2022 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -406,6 +406,9 @@ main( int argc, char **argv )
 
 	if ( pw_ask ) {
 		passwd = getpassphrase( _("Enter LDAP Password: ") );
+		if ( passwd == NULL ) { /* Allow EOF to exit. */
+			exit( EXIT_FAILURE );
+		}
 
 	} else if ( pw_file ) {
 		struct berval	pw;

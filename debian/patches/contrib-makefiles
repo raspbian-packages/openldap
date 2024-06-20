@@ -46,3 +46,24 @@
  
  PROGRAMS = smbk5pwd.la
  MANPAGES = slapo-smbk5pwd.5
+--- a/contrib/slapd-modules/ppm/Makefile
++++ b/contrib/slapd-modules/ppm/Makefile
+@@ -68,7 +68,7 @@
+ 	$(CC) $(CFLAGS) $(OPT) $(CPPFLAGS) $(LDFLAGS) $(INCS) $(LDAP_LIBS) -Wl,-rpath=. -o $(TEST) ppm_test.c $(PROGRAMS) $(LDAP_LIBS) $(CRACKLIB)
+ 
+ ppm.o:
+-	$(CC) $(CFLAGS) $(OPT) $(CPPFLAGS) $(DEFS) -c $(INCS) ppm.c
++	$(CC) $(CFLAGS) -fPIC $(OPT) $(CPPFLAGS) $(DEFS) -c $(INCS) ppm.c
+ 
+ ppm: ppm.o
+ 	$(CC) $(LDFLAGS) $(INCS) -shared -o $(PROGRAMS) ppm.o $(CRACKLIB)
+@@ -78,7 +78,8 @@
+ 	for p in $(PROGRAMS); do \
+ 		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)/$(moduledir) ; \
+ 	done
+-	$(INSTALL) -m 644 $(EXAMPLE) $(DESTDIR)$(sysconfdir)/
++	# installed by debian/slapd-contrib.examples
++	# $(INSTALL) -m 644 $(EXAMPLE) $(DESTDIR)$(sysconfdir)/
+ 	$(INSTALL) -m 644 $(MANDOC) $(DESTDIR)$(man5dir)/
+ #	$(INSTALL) -m 755 $(TEST) $(libdir)
+ 

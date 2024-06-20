@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2022 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *
@@ -111,7 +111,7 @@ static int dgroup_cf( ConfigArgs *c )
 		 */
 		a2 = ch_malloc( sizeof(adpair) );
 
-		for ( app = &on->on_bi.bi_private; *app; app = &(*app)->ap_next )
+		for ( app = (adpair **)&on->on_bi.bi_private; *app; app = &(*app)->ap_next )
 			/* Get to the end */ ;
 
 		a2->ap_mem = ap.ap_mem;

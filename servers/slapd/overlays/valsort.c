@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2022 The OpenLDAP Foundation.
+ * Copyright 2005-2024 The OpenLDAP Foundation.
  * Portions copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -201,7 +201,7 @@ valsort_cf_func(ConfigArgs *c) {
 		return(1);
 	}
 
-	for ( vip = &on->on_bi.bi_private; *vip; vip = &(*vip)->vi_next )
+	for ( vip = (valsort_info **)&on->on_bi.bi_private; *vip; vip = &(*vip)->vi_next )
 		/* Get to the end */ ;
 
 	vi = ch_malloc( sizeof(valsort_info) );

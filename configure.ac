@@ -1,7 +1,7 @@
 dnl $OpenLDAP$
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2022 The OpenLDAP Foundation.
+dnl Copyright 1998-2024 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,9 @@ define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
 define([AC_LIBTOOL_LANG_GCJ_CONFIG], [:])dnl
 dnl ================================================================
 dnl Configure.in for OpenLDAP
-AC_COPYRIGHT([[Copyright 1998-2022 The OpenLDAP Foundation. All rights reserved.
+AC_COPYRIGHT([[Copyright 1998-2024 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id: 15bca89511fc428731cf9ab71a9b46e37511be67 $])
+AC_REVISION([$Id: a5548437ea246ecc6b6aacbf1da365276e287201 $])
 AC_INIT([OpenLDAP],,[https://bugs.openldap.org],,[https://www.openldap.org])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
 dnl ----------------------------------------------------------------
@@ -97,7 +97,7 @@ AH_TOP([
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation
+ * Copyright 1998-2024 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -561,7 +561,6 @@ CLIENT_LIBS=
 
 SLAPD_LIBS=
 BALANCER_LIBS=
-BALANCER_INCLUDE=
 
 BUILD_SLAPD=no
 BUILD_BALANCER=no
@@ -640,7 +639,6 @@ MODULES_LIBS=
 SLAPI_LIBS=
 LIBSLAPI=
 AUTH_LIBS=
-SYSTEMD_LIBS=
 
 SLAPD_SLP_LIBS=
 SLAPD_GMP_LIBS=
@@ -739,8 +737,22 @@ if test $ol_enable_perl != no ; then
 		fi
 
 	else
-		PERL_CPPFLAGS="`$PERLBIN -MExtUtils::Embed -e ccopts`"
-		PERL_LDFLAGS="`$PERLBIN -MExtUtils::Embed -e ldopts|sed -e 's/ -lc / /' -e 's/ -lc$//'`"
+		PERL_CPPFLAGS=""
+		for opt in `$PERLBIN -MExtUtils::Embed -e ccopts`; do
+			case "$opt" in
+			"-flto=auto" | "-Wall" )
+				continue;;
+			esac
+			PERL_CPPFLAGS="$PERL_CPPFLAGS $opt"
+		done
+		PERL_LDFLAGS=""
+		for opt in `$PERLBIN" -MExtUtils::Embed -e ldopts`; do
+			case "$opt" in
+			"-lc" )
+				continue;;
+			esac
+			PERL_LDFLAGS="$PERL_LDFLAGS $opt"
+		done
 
 		if test x"$ol_enable_perl" = "xyes" ; then
 			SLAPD_PERL_LDFLAGS="$PERL_LDFLAGS"
@@ -1010,7 +1022,11 @@ dnl ----------------------------------------------------------------
 AC_CHECK_HEADERS( sys/epoll.h )
 if test "${ac_cv_header_sys_epoll_h}" = yes; then
 	AC_MSG_CHECKING(for epoll system call)
-	AC_RUN_IFELSE([AC_LANG_SOURCE([[int main(int argc, char **argv)
+	AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdlib.h>
+#ifdef HAVE_SYS_POLL_H
+#include <sys/epoll.h>
+#endif
+int main(int argc, char **argv)
 {
 	int epfd = epoll_create(256);
 	exit (epfd == -1 ? 1 : 0);
@@ -1233,7 +1249,7 @@ if test $ol_with_tls = openssl || test $ol_with_tls = auto ; then
 [#endif]])],
 					, [AC_MSG_FAILURE([OpenSSL 1.1.1 or newer required])])
 
-		AC_CHECK_LIB(ssl, SSL_export_keying_material_early,
+		AC_CHECK_LIB(ssl, SSL_CTX_set_ciphersuites,
 			[have_openssl=yes], [have_openssl=no],
 			[-lcrypto])
 
@@ -1363,10 +1379,10 @@ case $ol_with_threads in auto | yes | posix)
 		dnl 	pthread_create() in -lpthread (many)
 		dnl 	pthread_create() in -lc_r (FreeBSD)
 		dnl
-		dnl Check pthread (draft4) flags (depreciated)
+		dnl Check pthread (draft4) flags (deprecated)
 		dnl 	pthread_create() with -threads (OSF/1)
 		dnl
-		dnl Check pthread (draft4) libraries (depreciated)
+		dnl Check pthread (draft4) libraries (deprecated)
 		dnl 	pthread_mutex_unlock() in -lpthreads -lmach -lexc -lc_r (OSF/1)
 		dnl 	pthread_mutex_lock() in -lpthreads -lmach -lexc (OSF/1)
 		dnl 	pthread_mutex_trylock() in -lpthreads -lexc (OSF/1)
@@ -1387,7 +1403,7 @@ case $ol_with_threads in auto | yes | posix)
 			ol_link_threads=posix
 			ol_link_pthreads=""
 		fi
-		
+
 dnl		OL_PTHREAD_TRY([-mt],		[ol_cv_pthread_mt])
 		OL_PTHREAD_TRY([-kthread],	[ol_cv_pthread_kthread])
 		OL_PTHREAD_TRY([-pthread],	[ol_cv_pthread_pthread])
@@ -1474,10 +1490,8 @@ pthread_rwlock_t rwlock;
 				dnl save the flags
 				AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <pthread.h>
-#ifndef NULL
-#define NULL (void*)0
-#endif
-]], [[pthread_detach(NULL);]])],[ol_cv_func_pthread_detach=yes],[ol_cv_func_pthread_detach=no])
+pthread_t thread;
+]], [[pthread_detach(thread);]])],[ol_cv_func_pthread_detach=yes],[ol_cv_func_pthread_detach=no])
 			])
 
 			if test $ol_cv_func_pthread_detach = no ; then
@@ -1532,6 +1546,9 @@ dnl			esac
 				AC_CACHE_CHECK([if select yields when using pthreads],
 					ol_cv_pthread_select_yields,[
 				AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#define _XOPEN_SOURCE 500               /* For pthread_setconcurrency() on glibc */
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -1542,8 +1559,12 @@ dnl			esac
 
 static int fildes[2];
 
+#ifdef __STDC__
+static void *task(void *p)
+#else
 static void *task(p)
 	void *p;
+#endif
 {
 	int i;
 	struct timeval tv;
@@ -1567,9 +1588,13 @@ static void *task(p)
 	exit(0); /* if we exit here, the select blocked the whole process */
 }
 
+#ifdef __STDC__
+int main(int argc, char **argv)
+#else
 int main(argc, argv)
 	int argc;
 	char **argv;
+#endif
 {
 	pthread_t t;
 
@@ -2081,42 +2106,29 @@ dnl ----------------------------------------------------------------
 dnl
 dnl Check for systemd (only if we have a server)
 dnl
-WITH_SYSTEMD=no
 systemdsystemunitdir=
-ol_link_systemd=no
-if test $ol_enable_slapd == no && test $ol_enable_balancer != yes ; then
+if test $ol_enable_slapd = no && test $ol_enable_balancer != yes ; then
 	if test $ol_with_systemd != no ; then
 		AC_MSG_WARN([servers disabled, ignoring --with-systemd=$ol_with_systemd argument])
 		ol_with_systemd=no
 	fi
 fi
-if test $ol_with_systemd != no ; then
+
+if test $ol_with_systemd = auto; then
 	AC_CHECK_HEADERS(systemd/sd-daemon.h)
-
 	if test $ac_cv_header_systemd_sd_daemon_h = yes; then
-		AC_CHECK_LIB(systemd, sd_notify,
-			[ol_link_systemd="-lsystemd"])
+		ol_with_systemd=yes
 	fi
+fi
 
-	if test $ol_link_systemd = no ; then
-		if test $ol_with_systemd != auto ; then
-			AC_MSG_ERROR([Could not locate systemd])
+if test $ol_with_systemd = yes ; then
+	AC_DEFINE(HAVE_SYSTEMD,1,[define if you have systemd])
+	PKG_CHECK_VAR(systemdsystemunitdir, systemd, systemdsystemunitdir)
+	if test -z "$systemdsystemunitdir"; then
+		if test -d /usr/lib/systemd/system; then
+			systemdsystemunitdir=/usr/lib/systemd/system
 		else
-			AC_MSG_WARN([Could not locate systemd])
-			AC_MSG_WARN([systemd service notification not supported!])
-		fi
-	else
-		AC_DEFINE(HAVE_SYSTEMD,1,[define if you have systemd])
-		SYSTEMD_LIBS="$ol_link_systemd"
-		WITH_SYSTEMD=yes
-
-		PKG_CHECK_VAR(systemdsystemunitdir, systemd, systemdsystemunitdir)
-		if test -z "$systemdsystemunitdir"; then
-			if test -d /usr/lib/systemd/system; then
-				systemdsystemunitdir=/usr/lib/systemd/system
-			else
-				systemdsystemunitdir=/lib/systemd/system
-			fi
+			systemdsystemunitdir=/lib/systemd/system
 		fi
 	fi
 fi
@@ -3094,7 +3106,7 @@ if test "$ol_enable_argon2" = "yes" ; then
 
 	BUILD_PW_ARGON2=$ol_enable_argon2
 	if test "$ol_enable_argon2" = "yes" ; then
-		SLAPD_DYNAMIC_PWMODS="$SLAPD_DYNAMIC_PWDMODS argon2.la"
+		SLAPD_DYNAMIC_PWMODS="$SLAPD_DYNAMIC_PWMODS argon2.la"
 	fi
 	AC_DEFINE_UNQUOTED(SLAPD_PWMOD_PW_ARGON2,$SLAPD_MOD_DYNAMIC,[define for Argon2 Password hashing module])
 fi
@@ -3103,11 +3115,11 @@ if test "$ol_enable_balancer" != no \
 		-a "$ol_with_threads" != no \
 		-a "$have_libevent" = yes ; then
 	if test "$ol_enable_balancer" = mod; then
-		BALANCER_INCLUDE=Makefile.module
 		BUILD_BALANCER=mod
+		BALANCER_MAKE="servers/lloadd/Makefile_module.in:build/mod.mk"
 	else
-		BALANCER_INCLUDE=Makefile.server
 		BUILD_BALANCER=yes
+		BALANCER_MAKE="servers/lloadd/Makefile_server.in:build/srv.mk"
 	fi
 fi
 
@@ -3118,6 +3130,7 @@ if test "$ol_enable_slapi" != no ; then
 fi
 
 OL_VERSIONED_SYMBOLS=""
+DO_VERSIONED_SYMBOLS="# "
 if test $ol_enable_versioning != no; then
 	LDVS=`$LD --help < /dev/null 2>/dev/null | grep gnu-version-script`
 	if test -z "$LDVS"; then
@@ -3131,6 +3144,9 @@ if test $ol_enable_versioning != no; then
 		fi
 	else
 		OL_VERSIONED_SYMBOLS="-z gnu-version-script="
+	fi
+	if test -n "$OL_VERSIONED_SYMBOLS"; then
+		DO_VERSIONED_SYMBOLS=""
 	fi
 fi
 
@@ -3154,10 +3170,10 @@ AC_SUBST(WITH_SASL)
 AC_SUBST(WITH_TLS)
 AC_SUBST(WITH_MODULES_ENABLED)
 AC_SUBST(WITH_ACI_ENABLED)
-AC_SUBST(WITH_SYSTEMD)
 AC_SUBST(BUILD_THREAD)
 AC_SUBST(BUILD_LIBS_DYNAMIC)
 AC_SUBST(OL_VERSIONED_SYMBOLS)
+AC_SUBST(DO_VERSIONED_SYMBOLS)
 
 AC_SUBST(BUILD_SLAPD)
 dnl slapi
@@ -3242,7 +3258,6 @@ AC_SUBST(SLAPI_LIBS)
 AC_SUBST(LIBSLAPI)
 AC_SUBST(AUTH_LIBS)
 AC_SUBST(ARGON2_LIBS)
-AC_SUBST(SYSTEMD_LIBS)
 
 AC_SUBST(SLAPD_SLP_LIBS)
 AC_SUBST(SLAPD_GMP_LIBS)
@@ -3253,8 +3268,6 @@ AC_SUBST(SLAPD_SQL_INCLUDES)
 
 AC_SUBST(WT_CFLAGS)
 AC_SUBST(WT_LIBS)
-
-AC_SUBST(BALANCER_INCLUDE)
 
 dnl ----------------------------------------------------------------
 dnl final help output
@@ -3305,9 +3318,7 @@ AC_CONFIG_FILES([Makefile:build/top.mk:Makefile.in:build/dir.mk]
 [servers/slapd/slapi/Makefile:build/top.mk:servers/slapd/slapi/Makefile.in:build/lib.mk:build/lib-shared.mk]
 [servers/slapd/overlays/Makefile:build/top.mk:servers/slapd/overlays/Makefile.in:build/lib.mk]
 [servers/slapd/pwmods/Makefile:build/top.mk:servers/slapd/pwmods/Makefile.in:build/lib.mk]
-[servers/lloadd/Makefile:build/top.mk:servers/lloadd/Makefile.in]
-[servers/lloadd/Makefile.server:servers/lloadd/Makefile_server.in:build/srv.mk]
-[servers/lloadd/Makefile.module:servers/lloadd/Makefile_module.in:build/mod.mk]
+[servers/lloadd/Makefile:build/top.mk:servers/lloadd/Makefile.in:$BALANCER_MAKE]
 [tests/Makefile:build/top.mk:tests/Makefile.in:build/dir.mk]
 [tests/run]
 [tests/progs/Makefile:build/top.mk:tests/progs/Makefile.in:build/rules.mk])
@@ -3321,7 +3332,7 @@ rm -f $BACKENDSC
 cat > $BACKENDSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -3372,7 +3383,7 @@ rm -f $OVERLAYSC
 cat > $OVERLAYSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

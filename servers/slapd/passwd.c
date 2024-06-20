@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -290,6 +290,8 @@ old_good:
 
 	} else {
 		slap_callback **sc;
+
+		cb.sc_next = op->o_callback;
 
 		op->o_tag = LDAP_REQ_MODIFY;
 		op->o_callback = &cb;

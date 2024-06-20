@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2022 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2004 Symas Corporation.
  * All rights reserved.
  *
@@ -603,6 +603,7 @@ refint_repair(
 	op->o_ndn = op->o_bd->be_rootndn;
 	cache = op->o_do_not_cache;
 	op->o_do_not_cache = 1;
+	op->o_abandon = 0;
 
 	/* search */
 	rc = op->o_bd->be_search( op, &rs );

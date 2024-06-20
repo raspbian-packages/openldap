@@ -27,7 +27,7 @@ ifneq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	CONFIG += --disable-slapd
 endif
 
-CONTRIB_MODULES = autogroup lastbind passwd passwd/pbkdf2 passwd/sha2 smbk5pwd
+CONTRIB_MODULES = autogroup lastbind passwd passwd/pbkdf2 passwd/sha2 ppm smbk5pwd
 
 # Ensure CC is set correctly for cross builds, unless it has already
 # been set explicitly.
@@ -139,8 +139,7 @@ override_dh_fixperms-arch:
 endif
 
 override_dh_strip:
-	dh_strip -pslapd --dbgsym-migration='slapd-dbg (<< 2.4.45+dfsg-1~)'
-	dh_strip --remaining-packages
+	dh_strip
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	# hardlink these so not confined by apparmor; do this here and not
 	# in dh_link so that dh_strip doesn't get confused and put the wrong

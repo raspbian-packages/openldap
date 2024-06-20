@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2022 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -1073,7 +1073,7 @@ unique_add(
 	Debug(LDAP_DEBUG_TRACE, "==> unique_add <%s>\n",
 	      op->o_req_dn.bv_val );
 
-	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) || (
+	if ( be_shadow_update( op ) || (
 			get_relax(op) > SLAP_CONTROL_IGNORED
 			&& access_allowed( op, op->ora_e,
 				slap_schema.si_ad_entry, NULL,
@@ -1225,7 +1225,7 @@ unique_modify(
 		return rc;
 	}
 
-	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) ) {
+	if ( be_shadow_update( op ) ) {
 		return rc;
 	}
 	if ( get_relax(op) > SLAP_CONTROL_IGNORED
@@ -1365,7 +1365,7 @@ unique_modrdn(
 	Debug(LDAP_DEBUG_TRACE, "==> unique_modrdn <%s> <%s>\n",
 		op->o_req_dn.bv_val, op->orr_newrdn.bv_val );
 
-	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) ) {
+	if ( be_shadow_update( op ) ) {
 		return rc;
 	}
 	if ( get_relax(op) > SLAP_CONTROL_IGNORED

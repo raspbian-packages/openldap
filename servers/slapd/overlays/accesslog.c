@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2022 The OpenLDAP Foundation.
+ * Copyright 2005-2024 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -2044,7 +2044,7 @@ accesslog_op_mod( Operation *op, SlapReply *rs )
 		return SLAP_CB_CONTINUE;
 
 	/* can't do anything if logDB isn't open */
-	if ( !SLAP_DBOPEN( li->li_db ))
+	if ( !li->li_db || !SLAP_DBOPEN( li->li_db ))
 		return SLAP_CB_CONTINUE;
 	
 	logop = accesslog_op2logop( op );
@@ -2407,7 +2407,13 @@ accesslog_db_root(
 				attr_merge_one( e, slap_schema.si_ad_entryCSN,
 					&a->a_vals[0], &a->a_nvals[0] );
 				attr_merge( e, a->a_desc, a->a_vals, a->a_nvals );
+
+				/* Populate minCSN */
 				attr_merge( e, ad_minCSN, a->a_vals, a->a_nvals );
+				ber_bvarray_dup_x( &li->li_mincsn, a->a_vals, NULL );
+				li->li_numcsns = a->a_numvals;
+				li->li_sids = slap_parse_csn_sids( li->li_mincsn, li->li_numcsns, NULL );
+				slap_sort_csn_sids( li->li_mincsn, li->li_sids, li->li_numcsns, NULL );
 			}
 			be_entry_release_rw( op, e_ctx, 0 );
 		}
@@ -2668,7 +2674,7 @@ int accesslog_initialize()
 {
 	int i, rc;
 	Syntax *rdnTimestampSyntax;
-	MatchingRule *rdnTimestampMatch;
+	MatchingRule *rdnTimestampMatch, *rdnTimestampOrdering;
 
 	accesslog.on_bi.bi_type = "accesslog";
 	accesslog.on_bi.bi_db_init = accesslog_db_init;
@@ -2732,21 +2738,26 @@ int accesslog_initialize()
 
 	/* Inject custom normalizer for reqStart/reqEnd */
 	rdnTimestampMatch = ch_malloc( sizeof( MatchingRule ));
+	rdnTimestampOrdering = ch_malloc( sizeof( MatchingRule ));
 	rdnTimestampSyntax = ch_malloc( sizeof( Syntax ));
 	*rdnTimestampMatch = *ad_reqStart->ad_type->sat_equality;
 	rdnTimestampMatch->smr_normalize = rdnTimestampNormalize;
+	*rdnTimestampOrdering = *ad_reqStart->ad_type->sat_ordering;
+	rdnTimestampOrdering->smr_normalize = rdnTimestampNormalize;
 	*rdnTimestampSyntax = *ad_reqStart->ad_type->sat_syntax;
 	rdnTimestampSyntax->ssyn_validate = rdnTimestampValidate;
 	ad_reqStart->ad_type->sat_equality = rdnTimestampMatch;
+	ad_reqStart->ad_type->sat_ordering = rdnTimestampOrdering;
 	ad_reqStart->ad_type->sat_syntax = rdnTimestampSyntax;
 
 	rdnTimestampMatch = ch_malloc( sizeof( MatchingRule ));
+	rdnTimestampOrdering = ch_malloc( sizeof( MatchingRule ));
 	rdnTimestampSyntax = ch_malloc( sizeof( Syntax ));
 	*rdnTimestampMatch = *ad_reqStart->ad_type->sat_equality;
-	rdnTimestampMatch->smr_normalize = rdnTimestampNormalize;
+	*rdnTimestampOrdering = *ad_reqStart->ad_type->sat_ordering;
 	*rdnTimestampSyntax = *ad_reqStart->ad_type->sat_syntax;
-	rdnTimestampSyntax->ssyn_validate = rdnTimestampValidate;
 	ad_reqEnd->ad_type->sat_equality = rdnTimestampMatch;
+	ad_reqEnd->ad_type->sat_ordering = rdnTimestampOrdering;
 	ad_reqEnd->ad_type->sat_syntax = rdnTimestampSyntax;
 
 	for ( i=0; locs[i].ot; i++ ) {
