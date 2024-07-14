@@ -19,10 +19,10 @@ LDAP_LIB = $(LDAP_BUILD)/libraries/libldap/libldap.la \
 	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
 SSL_INC = 
-SSL_LIB = -lcrypto
+SSL_LIB = -lnettle
 
-HEIMDAL_INC = -I/usr/heimdal/include
-HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
+HEIMDAL_INC = $(shell krb5-config.heimdal --cflags krb5 kadm-server)
+HEIMDAL_LIB = $(shell krb5-config.heimdal --libs krb5 kadm-server)
 
 LIBTOOL = $(LDAP_BUILD)/libtool
 INSTALL = /usr/bin/install
@@ -31,7 +31,8 @@ OPT = -g -O2
 # Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
 DEFS = -DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
 INCS = $(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
-LIBS = $(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
+# put /usr/lib/heimdal before /usr/lib in case libkrb5-dev is installed, #745356
+LIBS = $(HEIMDAL_LIB) $(LDAP_LIB) $(SSL_LIB)
 
 PROGRAMS = smbk5pwd.la
 MANPAGES = slapo-smbk5pwd.5
