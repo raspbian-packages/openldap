@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -406,7 +406,7 @@ request_bind( LloadConnection *client, LloadOperation *op )
         Debug( LDAP_DEBUG_ANY, "request_bind: "
                 "ber_alloc failed\n" );
 
-        operation_unlink( op );
+        OPERATION_UNLINK(op);
 
         CONNECTION_LOCK(client);
         goto fail;
@@ -985,7 +985,7 @@ handle_vc_bind_response(
     }
 
 done:
-    operation_unlink( op );
+    OPERATION_UNLINK(op);
     ber_free( ber, 1 );
     return rc;
 }

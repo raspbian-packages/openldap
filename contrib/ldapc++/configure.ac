@@ -1,13 +1,13 @@
 dnl $OpenLDAP$
 
-dnl Copyright 2000-2022 The OpenLDAP Foundation. All Rights Reserved.
+dnl Copyright 2000-2024 The OpenLDAP Foundation. All Rights Reserved.
 dnl COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_COPYRIGHT([[Copyright 2000-2022 The OpenLDAP Foundation. All rights reserved.
+AC_COPYRIGHT([[Copyright 2000-2024 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id: 98b3f7d81f7f9f1b793e68dc179b79b866fc8786 $])
+AC_REVISION([$Id: b89e84a84fc301457df6ea2d719cdc09129a5b2a $])
 AC_INIT(ldapcpplib, [] , [http://www.openldap.org/its/] )
 AC_CONFIG_SRCDIR(src/LDAPConnection.h)
 AM_INIT_AUTOMAKE(foreign)

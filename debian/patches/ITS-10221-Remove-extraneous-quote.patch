@@ -1,0 +1,25 @@
+From 7bc97addc83f109f1e5e203e28362767279d29af Mon Sep 17 00:00:00 2001
+From: Quanah Gibson-Mount <quanah@openldap.org>
+Date: Mon, 3 Jun 2024 15:08:22 +0000
+Subject: [PATCH] ITS#10221 - Remove extraneous quote
+
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index a5548437ea..342e401a4a 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -746,7 +746,7 @@ if test $ol_enable_perl != no ; then
+ 			PERL_CPPFLAGS="$PERL_CPPFLAGS $opt"
+ 		done
+ 		PERL_LDFLAGS=""
+-		for opt in `$PERLBIN" -MExtUtils::Embed -e ldopts`; do
++		for opt in `$PERLBIN -MExtUtils::Embed -e ldopts`; do
+ 			case "$opt" in
+ 			"-lc" )
+ 				continue;;
+-- 
+2.39.2
+

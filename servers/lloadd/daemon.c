@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -45,8 +45,8 @@
 
 #include "ldap_rq.h"
 
-#ifdef HAVE_SYSTEMD_SD_DAEMON_H
-#include <systemd/sd-daemon.h>
+#ifdef HAVE_SYSTEMD
+#include "sd-notify.h"
 #endif
 
 #ifdef LDAP_PF_LOCAL
@@ -91,6 +91,11 @@ int lload_daemon_mask;
 struct event_base *listener_base = NULL;
 LloadListener **lload_listeners = NULL;
 static ldap_pvt_thread_t listener_tid, *daemon_tid;
+
+#ifndef RESOLV_CONF_PATH
+#define RESOLV_CONF_PATH "/etc/resolv.conf"
+#endif
+char *lload_resolvconf_path = RESOLV_CONF_PATH;
 
 struct event_base *daemon_base = NULL;
 struct evdns_base *dnsbase;
@@ -946,7 +951,8 @@ lload_listener(
 static void *
 lload_listener_thread( void *ctx )
 {
-    int rc = event_base_dispatch( listener_base );
+    /* ITS#9984 Survive the listeners being paused if we run out of fds */
+    int rc = event_base_loop( listener_base, EVLOOP_NO_EXIT_ON_EMPTY );
     Debug( LDAP_DEBUG_ANY, "lload_listener_thread: "
             "event loop finished: rc=%d\n",
             rc );
@@ -1237,12 +1243,21 @@ lloadd_daemon( struct event_base *daemon_base )
 
     assert( daemon_base != NULL );
 
-    dnsbase = evdns_base_new( daemon_base, EVDNS_BASE_INITIALIZE_NAMESERVERS );
+    dnsbase = evdns_base_new( daemon_base, 0 );
     if ( !dnsbase ) {
         Debug( LDAP_DEBUG_ANY, "lloadd startup: "
                 "failed to set up for async name resolution\n" );
         return -1;
     }
+
+    /*
+     * ITS#10070: Allow both operation without working DNS (test environments)
+     * and e.g. containers that don't have a /etc/resolv.conf but do have a
+     * server listening on 127.0.0.1 which is the default.
+     */
+    (void)evdns_base_resolv_conf_parse( dnsbase,
+            DNS_OPTION_NAMESERVERS|DNS_OPTION_HOSTSFILE,
+            lload_resolvconf_path );
 
     if ( lload_daemon_threads > SLAPD_MAX_DAEMON_THREADS )
         lload_daemon_threads = SLAPD_MAX_DAEMON_THREADS;

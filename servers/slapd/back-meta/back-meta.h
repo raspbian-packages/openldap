@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2022 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -489,7 +489,8 @@ meta_back_getconn(
 	Operation		*op,
 	SlapReply		*rs,
 	int			*candidate,
-	ldap_back_send_t	sendok );
+	ldap_back_send_t	sendok,
+	SlapReply *candidates );
 
 extern void
 meta_back_release_conn_lock(
@@ -504,7 +505,8 @@ meta_back_retry(
 	SlapReply		*rs,
 	metaconn_t		**mcp,
 	int			candidate,
-	ldap_back_send_t	sendok );
+	ldap_back_send_t	sendok,
+	SlapReply    *candidates );
 
 extern void
 meta_back_conn_free(
@@ -538,7 +540,8 @@ meta_back_dobind(
 	Operation		*op,
 	SlapReply		*rs,
 	metaconn_t		*mc,
-	ldap_back_send_t	sendok );
+	ldap_back_send_t	sendok,
+	SlapReply		*candidates );
 
 extern int
 meta_back_single_dobind(
@@ -625,7 +628,8 @@ meta_back_select_unique_candidate(
 extern int
 meta_clear_unused_candidates(
 	Operation		*op,
-	int			candidate );
+	int			candidate,
+	SlapReply *candidates );
 
 extern int
 meta_clear_one_candidate(

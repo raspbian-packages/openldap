@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1593,7 +1593,7 @@ fe_acl_group(
 							if ( rc2 != 0 ) {
 								/* give up... */
 								rc = (rc2 == LDAP_NO_SUCH_OBJECT) ? rc2 : LDAP_OTHER;
-								goto loopit;
+								goto nouser;
 							}
 						}
 
@@ -1602,6 +1602,7 @@ fe_acl_group(
 						{
 							rc = 0;
 						}
+nouser:
 						filter_free_x( op, filter, 1 );
 					}
 loopit:

@@ -2,6 +2,14 @@ Tests: slapd
 Depends: ldap-utils
 Restrictions: allow-stderr, isolation-container, needs-root, superficial
 
+Tests: slapd-tls
+Depends: ldap-utils, ssl-cert
+Restrictions: allow-stderr, isolation-container, needs-root, superficial
+
+Tests: perl
+Depends: ldap-utils, slapd
+Restrictions: allow-stderr, isolation-container, needs-root, superficial
+
 Tests: smbk5pwd
 Depends: ldap-utils, slapd, slapd-contrib, heimdal-kdc, samba, schema2ldif
 Restrictions: allow-stderr, isolation-container, needs-root, superficial

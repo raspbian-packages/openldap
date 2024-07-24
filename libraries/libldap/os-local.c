@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -164,8 +164,8 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 	}
 
 	Debug3(LDAP_DEBUG_TRACE,
-		"ldap_connect_timeout: fd: %d tm: %ld async: %d\n",
-		s, opt_tv ? tv.tv_sec : -1L, async);
+		"ldap_connect_timeout: fd: %d tm: %lld async: %d\n",
+		s, (long long)(opt_tv ? tv.tv_sec : -1L), async);
 
 	if ( ldap_pvt_ndelay_on(ld, s) == -1 ) return -1;
 

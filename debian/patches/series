@@ -13,3 +13,5 @@ add-tlscacert-option-to-ldap-conf
 fix-build-top-mk
 switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
 set-maintainer-name
+64-bit-time-t-compat.patch
+ITS-10221-Remove-extraneous-quote.patch

@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2022 The OpenLDAP Foundation.
+ * Copyright 2007-2024 The OpenLDAP Foundation.
  * Portions Copyright 2007 Michał Szulczyński.
  * Portions Copyright 2009 Howard Chu.
  * All rights reserved.
@@ -150,6 +150,7 @@ autogroup_add_member_to_group( Operation *op, BerValue *dn, BerValue *ndn, autog
 	o.orm_no_opattrs = 1;
 	o.o_managedsait = SLAP_CONTROL_CRITICAL;
 	o.o_relax = SLAP_CONTROL_CRITICAL;
+	o.o_abandon = 0;
 
 	oex.oe_key = (void *)&autogroup;
 	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
@@ -206,6 +207,7 @@ autogroup_add_member_values_to_group( Operation *op, struct berval *dn, autogrou
 	o.orm_no_opattrs = 1;
 	o.o_managedsait = SLAP_CONTROL_CRITICAL;
 	o.o_relax = SLAP_CONTROL_CRITICAL;
+	o.o_abandon = 0;
 
 	oex.oe_key = (void *)&autogroup;
 	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
@@ -279,6 +281,7 @@ autogroup_delete_member_from_group( Operation *op, BerValue *dn, BerValue *ndn, 
 	o.o_permissive_modify = 1;
 	o.o_dont_replicate = 1;
 	o.orm_no_opattrs = 1;
+	o.o_abandon = 0;
 
 	oex.oe_key = (void *)&autogroup;
 	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
@@ -335,6 +338,7 @@ autogroup_delete_member_values_from_group( Operation *op, struct berval *dn, aut
 	o.orm_no_opattrs = 1;
         o.o_managedsait = SLAP_CONTROL_CRITICAL;
         o.o_relax = SLAP_CONTROL_CRITICAL;
+		o.o_abandon = 0;
 
 	oex.oe_key = (void *)&autogroup;
 	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
@@ -502,6 +506,10 @@ autogroup_add_members_from_filter( Operation *op, Entry *e, autogroup_entry_t *a
 	Debug(LDAP_DEBUG_TRACE, "==> autogroup_add_members_from_filter <%s>\n",
 		age->age_dn.bv_val );
 
+	/* if modify isn't set, we're pre-op and should honor abandon flag */
+	if ( op->o_abandon && !modify )
+		return 0;
+
 	o.ors_attrsonly = 0;
 	o.o_tag = LDAP_REQ_SEARCH;
 
@@ -520,6 +528,7 @@ autogroup_add_members_from_filter( Operation *op, Entry *e, autogroup_entry_t *a
 	o.ors_slimit = SLAP_NO_LIMIT;
 	o.ors_attrs =  agf->agf_anlist ? agf->agf_anlist : slap_anlist_no_attrs;
 	o.o_do_not_cache = 1;
+	o.o_abandon = 0;
 
 	agg.agg_group = age;
 	agg.agg_filter = agf;
@@ -562,6 +571,7 @@ autogroup_add_members_from_filter( Operation *op, Entry *e, autogroup_entry_t *a
 		o.o_permissive_modify = 1;
 		o.o_dont_replicate = 1;
 		o.orm_no_opattrs = 1;
+		o.o_abandon = 0;
 
 	oex.oe_key = (void *)&autogroup;
 	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
@@ -1936,7 +1946,7 @@ ag_cfgen( ConfigArgs *c )
 		if( !is_at_subtype( member_url_ad->ad_type, slap_schema.si_ad_labeledURI->ad_type ) ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"\"autogroup-attrset <oc> <URL-ad> <member-ad>\": "
-				"AttributeDescription \"%s\" ",
+				"AttributeDescription \"%s\" "
 				"must be of a subtype \"labeledURI\"",
 				c->argv[ 2 ] );
 			Debug( LDAP_DEBUG_ANY, "%s: %s.\n",

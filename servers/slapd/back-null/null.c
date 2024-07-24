@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2022 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,8 +72,8 @@ null_back_db_open( BackendDB *be, ConfigReply *cr )
 
 	if ( ni->ni_dosearch ) {
 		e = entry_alloc();
-		e->e_name = be->be_suffix[0];
-		e->e_nname = be->be_nsuffix[0];
+		ber_dupbv( &e->e_name, &be->be_suffix[0] );
+		ber_dupbv( &e->e_nname, &be->be_nsuffix[0] );
 
 		dnRdn( &e->e_nname, &bv[0] );
 		bv[1].bv_val = strchr(bv[0].bv_val, '=') + 1;

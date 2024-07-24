@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -366,7 +366,7 @@ void *ldap_pvt_sasl_cbinding( void *ssl, int type, int is_server )
 	char endpoint_prefix[] = "tls-server-end-point:";
 	char cbinding[ 64 ];
 	struct berval cbv = { 64, cbinding };
-	void *cb_data; /* used since cb->data is const* */
+	unsigned char *cb_data; /* used since cb->data is const* */
 	sasl_channel_binding_t *cb;
 	char *prefix;
 	int plen;
@@ -392,7 +392,7 @@ void *ldap_pvt_sasl_cbinding( void *ssl, int type, int is_server )
 
 	cb = ldap_memalloc( sizeof(*cb) + plen + cbv.bv_len );
 	cb->len = plen + cbv.bv_len;
-	cb->data = cb_data = cb+1;
+	cb->data = cb_data = (unsigned char *)(cb+1);
 	memcpy( cb_data, prefix, plen );
 	memcpy( cb_data + plen, cbv.bv_val, cbv.bv_len );
 	cb->name = "ldap";

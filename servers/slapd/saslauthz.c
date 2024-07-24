@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -1423,8 +1423,9 @@ int slap_sasl_rewrite_delete( int valx ) {
 		return 1;
 	}
 
+	i = valx;
 	ber_memfree( authz_rewrites[ i ].bv_val );
-	for ( i = valx; !BER_BVISNULL( &authz_rewrites[ i + 1 ] ); i++ )
+	for ( ; !BER_BVISNULL( &authz_rewrites[ i + 1 ] ); i++ )
 	{
 		authz_rewrites[ i ] = authz_rewrites[ i + 1 ];
 	}

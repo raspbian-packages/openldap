@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2022 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,9 +65,9 @@ main( int argc, char **argv )
 	char *filename = NULL, *buf = NULL;
 	int		friendly = 0;
 	struct LDIFFP *fp;
-	LDIFRecord	record = {};
+	LDIFRecord	record = {0};
 	struct tester_conn_args	*config;
-	struct berval bv = {};
+	struct berval bv = {0};
 	unsigned long lineno = 0;
 
 	config = tester_init( "slapd-addel", TESTER_ADDEL );

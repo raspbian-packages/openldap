@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -1472,10 +1472,11 @@ tool_bind( LDAP *ld )
 
 		} else {
 			char *pw = getpassphrase( _("Enter LDAP Password: ") );
-			if ( pw ) {
-				passwd.bv_val = ber_strdup( pw );
-				passwd.bv_len = strlen( passwd.bv_val );
+			if ( pw == NULL ) { /* Allow EOF to exit. */
+				tool_exit( ld, EXIT_FAILURE );
 			}
+			passwd.bv_val = ber_strdup( pw );
+			passwd.bv_len = strlen( passwd.bv_val );
 		}
 	}
 
@@ -2210,7 +2211,7 @@ print_vlv( LDAP *ld, LDAPControl *ctrl )
 			ber_memfree( bv.bv_val );
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
-			ldif ? "vlvResult" : "vlvResult", buf, rc );
+			ldif ? "vlvResult: " : "vlvResult", buf, rc );
 	}
 
 	return rc;
