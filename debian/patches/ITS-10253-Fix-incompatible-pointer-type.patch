@@ -1,0 +1,34 @@
+Description: ITS#10253 Fix incompatible pointer type
+Author: Ryan Tandy <ryan@nardis.ca>
+Bug: https://bugs.openldap.org/show_bug.cgi?id=10253
+Bug-Debian: https://bugs.debian.org/1078822
+Last-Update: 2024-08-21
+
+---
+ libraries/libldap/tls_g.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/libraries/libldap/tls_g.c b/libraries/libldap/tls_g.c
+index 7c238750b3..de5b7f7c84 100644
+--- a/libraries/libldap/tls_g.c
++++ b/libraries/libldap/tls_g.c
+@@ -965,12 +965,13 @@ tlsg_session_pinning( LDAP *ld, tls_session *sess, char *hashalg, struct berval
+ 	}
+ 
+ 	if ( hashalg ) {
+-		keyhash.bv_len = gnutls_hash_get_len( alg );
+-		keyhash.bv_val = LDAP_MALLOC( keyhash.bv_len );
++		len = gnutls_hash_get_len( alg );
++		keyhash.bv_val = LDAP_MALLOC( len );
+ 		if ( !keyhash.bv_val || gnutls_fingerprint( alg, &key,
+-					keyhash.bv_val, &keyhash.bv_len ) < 0 ) {
++					keyhash.bv_val, &len ) < 0 ) {
+ 			goto done;
+ 		}
++		keyhash.bv_len = len;
+ 	} else {
+ 		keyhash.bv_val = (char *)key.data;
+ 		keyhash.bv_len = key.size;
+-- 
+2.45.2
+
