@@ -14,7 +14,7 @@ DEFS =
 INCS = $(LDAP_INC)
 LIBS = $(LDAP_LIB)
 
-PROGRAMS = pw-kerberos.la pw-netscape.la pw-radius.la pw-apr1.la
+PROGRAMS = pw-netscape.la pw-apr1.la
 MANPAGES = slapd-pw-radius.5
 LTVER = 0:0:0
 
