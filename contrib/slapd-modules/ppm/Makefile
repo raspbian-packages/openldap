@@ -62,18 +62,19 @@ TESTS=./unit_tests.sh
 MANDOC=slapm-ppm.5
 MDDOC=ppm.md
 
-all: 	ppm $(TEST)
+all: 	$(PROGRAMS) $(TEST)
 
-$(TEST): ppm
+$(TEST): $(PROGRAMS)
 	$(CC) $(CFLAGS) $(OPT) $(CPPFLAGS) $(LDFLAGS) $(INCS) $(LDAP_LIBS) -Wl,-rpath=. -o $(TEST) ppm_test.c $(PROGRAMS) $(LDAP_LIBS) $(CRACKLIB)
 
 ppm.o:
 	$(CC) $(CFLAGS) -fPIC $(OPT) $(CPPFLAGS) $(DEFS) -c $(INCS) ppm.c
 
-ppm: ppm.o
-	$(CC) $(LDFLAGS) $(INCS) -shared -o $(PROGRAMS) ppm.o $(CRACKLIB)
+ppm: $(PROGRAMS)
+$(PROGRAMS): ppm.o
+	$(CC) $(LDFLAGS) $(INCS) -shared -o $@ ppm.o $(CRACKLIB)
 
-install: ppm
+install: $(PROGRAMS)
 	mkdir -p $(DESTDIR)$(moduledir)
 	for p in $(PROGRAMS); do \
 		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)/$(moduledir) ; \
@@ -89,7 +90,7 @@ clean:
 	$(RM) -f ppm.o $(PROGRAMS) ppm.lo $(TEST)
 	$(RM) -rf .libs
 
-test: ppm $(TEST)
+test: $(PROGRAMS) $(TEST)
 	LDAP_SRC=$(LDAP_SRC) $(TESTS)
 
 doc:
