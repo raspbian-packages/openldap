@@ -1,0 +1,16 @@
+debian-version
+man-slapd 
+slapi-errorlog-file 
+ldapi-socket-place 
+wrong-database-location 
+index-files-created-as-root 
+sasl-default-path 
+getaddrinfo-is-threadsafe
+do-not-second-guess-sonames
+contrib-makefiles
+fix-build-top-mk
+switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
+set-maintainer-name
+64-bit-time-t-compat.patch
+cross.patch
+ppm-cross.patch
