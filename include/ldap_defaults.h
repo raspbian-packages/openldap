@@ -54,7 +54,7 @@
 #define SLAPD_DEFAULT_CONFIGDIR		LDAP_SYSCONFDIR LDAP_DIRSEP "slapd.d"
 #endif
 #ifndef SLAPD_DEFAULT_DB_DIR
-#define SLAPD_DEFAULT_DB_DIR		LDAP_RUNDIR LDAP_DIRSEP "openldap-data"
+#define SLAPD_DEFAULT_DB_DIR		LDAP_RUNDIR LDAP_DIRSEP "lib" LDAP_DIRSEP "ldap"
 #endif
 #define SLAPD_DEFAULT_DB_MODE		0600
 	/* default max deref depth for aliases */
