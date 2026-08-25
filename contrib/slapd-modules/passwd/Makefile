@@ -20,7 +20,7 @@ INCS = $(LDAP_INC)
 LIBS = $($(PLAT)_LIB) $(LDAP_LIB)
 LD_FLAGS = $(LDFLAGS) $($(PLAT)_LDFLAGS) -rpath $(moduledir) -module
 
-PROGRAMS = pw-kerberos.la pw-netscape.la pw-radius.la pw-apr1.la
+PROGRAMS = pw-netscape.la pw-apr1.la
 MANPAGES = slapd-pw-radius.5
 LTVER = 0:0:0
 

@@ -68,7 +68,7 @@ $(TEST): ppm
 	$(CC) $(CFLAGS) $(OPT) $(CPPFLAGS) $(DEFS) $(LDFLAGS) $(INCS) -Wl,-rpath=. -o $(TEST) ppm_test.c $(PROGRAMS) $(LDAP_LIBS) $(CRACKLIB)
 
 ppm.o:
-	$(CC) $(CFLAGS) $(OPT) $(CPPFLAGS) $(DEFS) -c $(INCS) ppm.c
+	$(CC) $(CFLAGS) -fPIC $(OPT) $(CPPFLAGS) $(DEFS) -c $(INCS) ppm.c
 
 ppm: ppm.o
 	$(CC) $(LDFLAGS) $(INCS) -shared -o $(PROGRAMS) ppm.o $(CRACKLIB)
@@ -78,7 +78,8 @@ install: ppm
 	for p in $(PROGRAMS); do \
 		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)/$(moduledir) ; \
 	done
-	$(INSTALL) -m 644 $(EXAMPLE) $(DESTDIR)$(sysconfdir)/
+	# installed by debian/slapd-contrib.examples
+	# $(INSTALL) -m 644 $(EXAMPLE) $(DESTDIR)$(sysconfdir)/
 	$(INSTALL) -m 644 $(MANDOC) $(DESTDIR)$(man5dir)/
 #	$(INSTALL) -m 755 $(TEST) $(libdir)
 
